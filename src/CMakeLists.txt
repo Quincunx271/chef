@@ -5,10 +5,6 @@ target_include_directories(chef
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(chef
-  INTERFACE
-    $<BUILD_INTERFACE:Chef::CTRE>
-)
 
 # Tests
 
@@ -20,6 +16,12 @@ if(BUILD_TESTING)
     # sources
     chef/chef.hpp
     chef/chef.test.cpp
+    chef/dfa/dfa.hpp
+    chef/dfa/dfa.test.cpp
+    chef/dfa/epsilon.hpp
+    chef/dfa/epsilon.test.cpp
+    chef/dfa/nfa.hpp
+    chef/dfa/nfa.test.cpp
   )
   target_link_libraries(test.chef
     PRIVATE
