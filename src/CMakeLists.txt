@@ -5,6 +5,10 @@ target_include_directories(chef
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
+target_compile_features(chef
+  INTERFACE
+    cxx_std_20
+)
 
 # Tests
 
@@ -14,6 +18,8 @@ if(BUILD_TESTING)
   add_executable(test.chef
     catch_main.test.cpp
     # sources
+    chef/_mdview.hpp
+    chef/_mdview.test.cpp
     chef/chef.hpp
     chef/chef.test.cpp
     chef/dfa/dfa.hpp
