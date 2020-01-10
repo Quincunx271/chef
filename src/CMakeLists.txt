@@ -15,8 +15,14 @@ target_compile_features(chef
 if(BUILD_TESTING)
   find_package(Catch2 2.4.0 REQUIRED)
 
+  add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generated/catch_main.test.cpp"
+    COMMAND ${CMAKE_COMMAND} -E echo "#define CATCH_CONFIG_MAIN" >> "${CMAKE_CURRENT_BINARY_DIR}/generated/catch_main.test.cpp"
+    COMMAND ${CMAKE_COMMAND} -E echo "#include <catch2/catch.hpp>" >> "${CMAKE_CURRENT_BINARY_DIR}/generated/catch_main.test.cpp"
+    VERBATIM
+  )
+
   add_executable(test.chef
-    catch_main.test.cpp
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/catch_main.test.cpp"
     # sources
     chef/_mdview.hpp
     chef/_mdview.test.cpp

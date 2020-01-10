@@ -1,16 +1,17 @@
+AllowShortCaseLabelsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
-AllowShortFunctionsOnASingleLine: None
+AllowShortFunctionsOnASingleLine: true
 AlwaysBreakTemplateDeclarations: true
 BasedOnStyle: WebKit
 BreakBeforeBraces: Custom
 BraceWrapping:
-  AfterClass: true
+  AfterClass: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterEnum: false
   AfterControlStatement: false
-  AfterEnum: true
   AfterFunction: true
   AfterNamespace: false
-  AfterStruct: true
-  AfterUnion: true
   BeforeCatch: false
   BeforeElse: false
   IndentBraces: false

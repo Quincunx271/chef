@@ -11,8 +11,7 @@
 namespace chef {
     // row-major multidimensional array view
     template <typename Container, int DimensionCount>
-    class _mdview
-    {
+    class _mdview {
     public:
         using underlying_type = Container;
         static constexpr auto num_dimensions = DimensionCount;
@@ -41,10 +40,7 @@ namespace chef {
             return dimensions_;
         }
 
-        constexpr auto container() const -> Container*
-        {
-            return container_;
-        }
+        constexpr auto container() const -> Container* { return container_; }
 
         constexpr auto operator[](std::array<std::size_t, num_dimensions> const indices) const
             -> decltype(auto)
@@ -54,8 +50,8 @@ namespace chef {
         }
 
         template <typename... Dims>
-        constexpr auto at(Dims const... indices) const noexcept -> std::size_t
-            requires(sizeof...(Dims) == num_dimensions)
+        constexpr auto at(Dims const... indices) const noexcept
+            -> decltype(auto) requires(sizeof...(Dims) == num_dimensions)
         {
             return at({std::size_t(indices)...});
         }

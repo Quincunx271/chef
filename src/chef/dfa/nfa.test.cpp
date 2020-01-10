@@ -6,15 +6,16 @@
 
 TEST_CASE("Simple stuff")
 {
-    chef::nfa nfa{
-        {"_", 'a', "lowercase"},
-        {"_", 'A', "_"},
-        {"_", chef::epsilon, "asdf"},
-        {"lowercase", 'a', "lowercase"},
-        {"lowercase", 'A', "_"},
+    chef::nfa_builder nfa{
+        {0, 1, 1},
+        {0, 2, 0},
+        {0, 0, 2},
+        {1, 1, 1},
+        {1, 1, 2},
+        {1, 2, 0},
     };
 
     std::ostringstream out;
     out << nfa;
-    // CHECK(out.str() == "");
+    CHECK(out.str() == "");
 }

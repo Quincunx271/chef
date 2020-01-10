@@ -1,0 +1,5 @@
+Name: chef
+Version: 0.0.0
+Namespace: chef
+
+Test-Driver: Catch-Main
