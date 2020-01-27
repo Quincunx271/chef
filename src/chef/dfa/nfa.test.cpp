@@ -4,7 +4,7 @@
 
 #include <catch2/catch.hpp>
 
-TEST_CASE("Simple stuff")
+TEST_CASE("Simple nfa usage")
 {
     chef::nfa_builder nfa({
         {0, 1, 1},
