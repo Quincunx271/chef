@@ -32,15 +32,16 @@ namespace chef {
             constexpr auto symbol_index = 1;
             constexpr auto to_index = 2;
 
-            auto const max_symbol
-                = std::transform_reduce(begin, end, symbol_type(0), _max, _get_index<symbol_index>);
+            auto const num_symbols
+                = std::transform_reduce(begin, end, symbol_type(0), _max, _get_index<symbol_index>)
+                + 1;
 
             auto const max_state = std::transform_reduce(begin, end,
                 std::transform_reduce(begin, end, state_type(0), _max, _get_index<from_index>),
                 _max, _get_index<to_index>);
 
             transition_table_.assign(static_cast<std::size_t>(max_state),
-                std::vector<std::vector<state_type>>(max_symbol));
+                std::vector<std::vector<state_type>>(num_symbols));
 
             while (begin != end) {
                 auto const [from, symbol, to] = *begin;
@@ -53,7 +54,7 @@ namespace chef {
 
         explicit nfa_builder(
             std::initializer_list<std::tuple<state_type, symbol_type, state_type>> data)
-            : nfa_builder{data.begin(), data.end()}
+            : nfa_builder {data.begin(), data.end()}
         {}
 
         auto const& compute_next(state_type state, symbol_type symbol) const

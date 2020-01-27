@@ -15,6 +15,6 @@ namespace chef {
 namespace std {
     template <>
     struct hash<chef::epsilon_t> {
-        auto operator()(chef::epsilon_t) const { return hash<int>{}(0); }
+        auto operator()(chef::epsilon_t) const { return hash<int>()(0); }
     };
 }

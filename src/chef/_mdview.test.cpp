@@ -4,7 +4,7 @@
 
 TEST_CASE("_mdview computes index correctly")
 {
-    auto const vec = std::vector<int>{
+    auto const vec = std::vector<int> {
         // clang-format off
         1, 2, 3, 4,
         5, 6, 7, 8,
@@ -25,7 +25,7 @@ TEST_CASE("_mdview computes index correctly")
 
 TEST_CASE("_mdview accesses correctly")
 {
-    auto vec = std::vector<int>{
+    auto vec = std::vector<int> {
         // clang-format off
         1, 2, 3, 4,
         5, 6, 7, 8,
@@ -59,7 +59,7 @@ TEST_CASE("_mdview accesses correctly")
 
 TEST_CASE("_mdview works for 1 dimensional view")
 {
-    auto const vec = std::vector<int>{0, 1, 2, 3, 4, 5, 6, 7};
+    auto const vec = std::vector<int> {0, 1, 2, 3, 4, 5, 6, 7};
 
     auto const mdview = chef::_make_mdview<1>(vec, vec.size());
 
@@ -75,7 +75,7 @@ TEST_CASE("_mdview works for 1 dimensional view")
 
 TEST_CASE("_mdview works for 3 dimensional view")
 {
-    auto const vec = std::vector<int>{
+    auto const vec = std::vector<int> {
         // clang-format off
         111, 112, 113, 114,
         121, 122, 123, 124,

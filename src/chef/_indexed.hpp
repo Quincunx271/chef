@@ -38,7 +38,7 @@ namespace chef {
             return *this;
         }
 
-        constexpr auto operator*() const { return reference_type{index, *first}; }
+        constexpr auto operator*() const { return reference_type {index, *first}; }
 
         constexpr auto operator==(sentinel_t) const { return first == last; }
 
