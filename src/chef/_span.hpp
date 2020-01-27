@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <iterator>
@@ -42,6 +43,17 @@ namespace chef {
         constexpr _span(Arr& arr)
             : _span(std::data(arr), std::size(arr))
         {}
+
+    public: // Accessors
+        constexpr auto size() const -> size_type { return end_ - begin_; }
+
+        constexpr auto data() const -> pointer { return begin_; }
+
+        constexpr auto operator[](size_type const index) const -> reference
+        {
+            assert(index < size());
+            return begin_[index];
+        }
 
     public: // Iterators:
         constexpr auto begin() const noexcept -> iterator { return begin_; }

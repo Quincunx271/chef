@@ -90,9 +90,9 @@ TEST_CASE("_mdview works for 3 dimensional view")
 
     auto const mdview = chef::_make_mdview<3>(vec, 4, 2, 3);
 
-    for (std::size_t z = 1; z <= 3; ++z) {
-        for (std::size_t y = 1; y <= 2; ++y) {
-            for (std::size_t x = 1; x <= 4; ++x) {
+    for (int z = 1; z <= 3; ++z) {
+        for (int y = 1; y <= 2; ++y) {
+            for (int x = 1; x <= 4; ++x) {
                 CAPTURE(x, y, z);
                 CHECK(mdview[{x - 1, y - 1, z - 1}] == z * 100 + y * 10 + x);
             }

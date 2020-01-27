@@ -42,6 +42,12 @@ namespace chef {
 
         constexpr auto container() const -> Container* { return container_; }
 
+        template <std::convertible_to<std::size_t> T>
+        constexpr auto operator[](T(&&indices)[num_dimensions]) const -> decltype(auto)
+        {
+            return (*this)[to_indices_array(indices)];
+        }
+
         constexpr auto operator[](std::array<std::size_t, num_dimensions> const indices) const
             -> decltype(auto)
         {
@@ -50,10 +56,16 @@ namespace chef {
         }
 
         template <typename... Dims>
-        constexpr auto at(Dims const... indices) const noexcept
+        constexpr auto at(Dims const... indices) const
             -> decltype(auto) requires(sizeof...(Dims) == num_dimensions)
         {
             return at({std::size_t(indices)...});
+        }
+
+        template <std::convertible_to<std::size_t> T>
+        constexpr auto at(T(&&indices)[num_dimensions]) const -> decltype(auto)
+        {
+            return at(to_indices_array(indices));
         }
 
         constexpr auto at(std::array<std::size_t, num_dimensions> const indices) const
@@ -68,6 +80,12 @@ namespace chef {
             requires(sizeof...(Dims) == num_dimensions)
         {
             return compute_index({std::size_t(indices)...});
+        }
+
+        template <std::convertible_to<std::size_t> T>
+        constexpr auto compute_index(T(&&indices)[num_dimensions]) const noexcept -> std::size_t
+        {
+            return compute_index(to_indices_array(indices));
         }
 
         constexpr auto compute_index(std::array<std::size_t, num_dimensions> const indices) const
@@ -121,6 +139,22 @@ namespace chef {
         {
             // max size:
             return std::size_t(-1);
+        }
+
+        template <typename Range>
+        static constexpr auto to_indices_array(Range&& range) noexcept
+            -> std::array<std::size_t, num_dimensions>
+        {
+            return to_indices_array_impl(
+                std::forward<Range>(range), std::make_index_sequence<num_dimensions>());
+        }
+
+        template <typename Range, std::size_t... Is>
+        static constexpr auto to_indices_array_impl(Range&& range,
+            std::index_sequence<Is...>) noexcept -> std::array<std::size_t, num_dimensions>
+        {
+            static_assert(sizeof...(Is) == num_dimensions);
+            return {static_cast<std::size_t>(range[Is])...};
         }
     };
 
