@@ -36,11 +36,13 @@ namespace chef {
                 = std::transform_reduce(begin, end, symbol_type(0), _max, _get_index<symbol_index>)
                 + 1;
 
-            auto const max_state = std::transform_reduce(begin, end,
-                std::transform_reduce(begin, end, state_type(0), _max, _get_index<from_index>),
-                _max, _get_index<to_index>);
+            auto const num_states = std::transform_reduce(begin, end,
+                                        std::transform_reduce(begin, end, state_type(0), _max,
+                                            _get_index<from_index>),
+                                        _max, _get_index<to_index>)
+                + 1;
 
-            transition_table_.assign(static_cast<std::size_t>(max_state),
+            transition_table_.assign(static_cast<std::size_t>(num_states),
                 std::vector<std::vector<state_type>>(num_symbols));
 
             while (begin != end) {
@@ -144,7 +146,7 @@ namespace chef {
 
                     transition_table_.push_back(chef::_span<state_type const>(
                         transition_table_data_.data() + (location - transition_table_data_.begin()),
-                        transition_table_data_.size()));
+                        next.size()));
                 }
             }
 
@@ -154,13 +156,17 @@ namespace chef {
         auto compute_next(state_type state, symbol_type symbol) const
             -> chef::_span<state_type const>
         {
-            return mdview().at(state, symbol);
+            return mdview().at(symbol, state);
         }
+
+        auto num_states() const -> std::size_t { return num_states_; }
+
+        auto num_symbols() const -> std::size_t { return num_symbols_; }
 
         auto states() const -> std::vector<state_type>
         {
             std::vector<state_type> result;
-            result.resize(mdview().dimensions().front());
+            result.resize(num_states());
             std::iota(begin(result), end(result), 0);
 
             return result;
@@ -180,7 +186,7 @@ namespace chef {
                 for (symbol_type symbol = 0; symbol < nfa.num_symbols_; ++symbol) {
                     out << from << " + " << symbol << " -> {";
 
-                    for (auto const to : tbl[{from, symbol}]) {
+                    for (auto const to : tbl[{symbol, from}]) {
                         out << to << ", ";
                     }
 
@@ -206,9 +212,9 @@ namespace chef {
         std::vector<state_type> transition_table_data_;
 
         auto mdview() const
-            -> decltype(_make_mdview<2>(transition_table_, num_states_, num_symbols_))
+            -> decltype(_make_mdview<2>(transition_table_, num_symbols_, num_states_))
         {
-            return _make_mdview<2>(transition_table_, num_states_, num_symbols_);
+            return _make_mdview<2>(transition_table_, num_symbols_, num_states_);
         }
     };
 }
