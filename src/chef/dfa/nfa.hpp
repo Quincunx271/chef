@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <initializer_list>
 #include <ostream>
 #include <set>
@@ -73,11 +74,14 @@ namespace chef {
             return result;
         }
 
-        auto num_states() const noexcept -> state_type { return transition_table_.size(); }
+        auto num_states() const noexcept -> state_type
+        {
+            return static_cast<state_type>(transition_table_.size());
+        }
 
         auto num_symbols() const noexcept -> symbol_type
         {
-            return transition_table_.front().size();
+            return static_cast<symbol_type>(transition_table_.front().size());
         }
 
         auto start_state() const -> state_type { return start_state_; }
@@ -162,9 +166,9 @@ namespace chef {
             return mdview().at(symbol, state);
         }
 
-        auto num_states() const -> std::size_t { return num_states_; }
+        auto num_states() const -> state_type { return num_states_; }
 
-        auto num_symbols() const -> std::size_t { return num_symbols_; }
+        auto num_symbols() const -> symbol_type { return num_symbols_; }
 
         auto states() const -> std::vector<state_type>
         {
@@ -178,6 +182,12 @@ namespace chef {
         auto start_state() const -> state_type { return start_state_; }
 
         auto final_states() const -> std::vector<state_type> { return final_states_; }
+
+        bool is_final(state_type state) const
+        {
+            return std::find(final_states_.begin(), final_states_.end(), state)
+                != final_states_.end();
+        }
 
         friend auto operator<<(std::ostream& out, nfa const& nfa) -> std::ostream&
         {

@@ -1,7 +1,16 @@
 #pragma once
 
+#include <cassert>
+#include <numeric>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
+#include <chef/_/bit_indices.hpp>
+#include <chef/_/function_objects.hpp>
+#include <chef/_/indexed.hpp>
+#include <chef/_/irange.hpp>
+#include <chef/_/transform.hpp>
 #include <chef/dfa/nfa.hpp>
 
 namespace chef {
@@ -67,5 +76,82 @@ namespace chef {
         }
     };
 
-    inline auto powerset_construction(nfa const& nfa) -> dfa { auto const states = nfa.states(); }
+    inline auto powerset_construction(nfa const& nfa) -> dfa
+    {
+        auto const original_states = nfa.states();
+
+        assert(original_states.size() <= 32 && "Currently, max NFA supported size is 64 states");
+
+        auto const num_symbols = nfa.num_symbols();
+        auto states = std::vector<dfa::state_type>{(1u << nfa.start_state())};
+        auto state_set = std::unordered_set<dfa::state_type>{states[0]};
+        auto cur_index = std::size_t{0};
+
+        auto transitions = std::unordered_map<dfa::state_type, std::vector<dfa::state_type>>{};
+
+        do {
+            auto const cur = states[cur_index++];
+
+            static constexpr auto combine_multistates = [](auto&& states) {
+                return std::accumulate(
+                    states.begin(), states.iend(), dfa::state_type{0}, std::bit_or{});
+            };
+
+            static constexpr auto to_multistate = [](auto&& states) {
+                auto state_masks
+                    = chef::_transform(states, [](nfa::state_type state) { return 1u << state; });
+
+                return combine_multistates(state_masks);
+            };
+
+            transitions.emplace(std::piecewise_construct, //
+                std::forward_as_tuple(cur), //
+                std::forward_as_tuple(num_symbols));
+
+            for (auto const symbol : chef::_irange(dfa::symbol_type{0}, num_symbols)) {
+                auto bits = chef::_bit_indices(cur);
+
+                auto state_mappings = chef::_transform(bits, [&](auto const state) {
+                    return to_multistate(nfa.compute_next(state, symbol));
+                });
+                auto const next = combine_multistates(state_mappings);
+
+                transitions[cur][symbol] = next;
+
+                if (state_set.insert(next).second) states.push_back(next);
+            }
+        } while (cur_index < states.size());
+
+        auto state_mapping = std::unordered_map<dfa::state_type, dfa::state_type>{};
+        state_mapping.reserve(states.size());
+
+        for (auto const [index, value] : chef::_indexed<dfa::state_type>(states)) {
+            state_mapping[value] = index;
+        }
+
+        auto const num_states = states.size();
+        auto transition_table = std::vector<dfa::state_type>();
+        transition_table.reserve(num_states * num_symbols);
+
+        for (auto const [index, value] : chef::_indexed<dfa::state_type>(states)) {
+            for (auto const symbol : chef::_irange(0, num_symbols)) {
+                auto const dst = transitions[value][symbol];
+
+                transition_table.push_back(state_mapping.at(dst));
+            }
+        }
+
+        auto final_states = std::vector<dfa::state_type>();
+
+        for (auto const [index, value] : chef::_indexed<dfa::state_type>(states)) {
+            auto bits = chef::_bit_indices(value);
+            auto is_final = std::find_if(bits.begin(), bits.iend(), [&nfa](auto const bit) {
+                return nfa.is_final(bit);
+            }) != bits.end();
+
+            if (is_final) final_states.push_back(value);
+        }
+
+        return chef::dfa(states, transition_table, 0, std::move(final_states));
+    }
 }
