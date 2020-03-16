@@ -1,0 +1,7 @@
+{
+  name: 'chef',
+  version: '0.0.0',
+  namespace: 'chef',
+
+  test_driver: 'Catch-Main',
+}

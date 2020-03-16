@@ -1,0 +1,11 @@
+{
+  compiler_id: 'gnu',
+  c_compiler: 'gcc-9',
+  cxx_compiler: 'g++-9',
+
+  debug: true,
+  cxx_flags: ['-fsanitize=address', '-std=c++2a', '-fconcepts'],
+  link_flags: ['-fsanitize=address'],
+
+  compiler_launcher: 'ccache',
+}
