@@ -29,7 +29,7 @@ namespace chef {
         public:
             using value_type
                 = std::remove_cvref_t<decltype(std::declval<ReadF&>()(std::declval<T const&>()))>;
-            using reference = value_type const&;
+            using reference = decltype(std::declval<ReadF&>()(std::declval<T const&>()));
             using pointer = value_type const*;
             using difference_type = std::ptrdiff_t;
             using iterator_category = std::input_iterator_tag;
