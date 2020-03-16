@@ -14,10 +14,10 @@
 #include <set>
 #include <vector>
 
-#include <chef/_function_objects.hpp>
-#include <chef/_indexed.hpp>
-#include <chef/_mdview.hpp>
-#include <chef/_span.hpp>
+#include <chef/_/function_objects.hpp>
+#include <chef/_/indexed.hpp>
+#include <chef/_/mdview.hpp>
+#include <chef/_/span.hpp>
 
 namespace chef {
     class nfa_builder {

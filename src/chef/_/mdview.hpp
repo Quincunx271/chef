@@ -7,8 +7,8 @@
 #include <numeric>
 #include <type_traits>
 
-#include <chef/_range_concepts.hpp>
-#include <chef/_std_concepts.hpp>
+#include <chef/_/range_concepts.hpp>
+#include <chef/_/std_concepts.hpp>
 
 namespace chef {
     // row-major multidimensional array view
