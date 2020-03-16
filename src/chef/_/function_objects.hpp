@@ -18,4 +18,7 @@ namespace chef {
     constexpr auto _get_index = [](auto&& tuple) -> decltype(auto) {
         return std::get<Index>(std::forward<decltype(tuple)>(tuple));
     };
+
+    constexpr auto _identity
+        = [](auto&& val) -> decltype(auto) { return std::forward<decltype(val)>(val); };
 }
