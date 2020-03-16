@@ -56,7 +56,7 @@ namespace chef {
 
         explicit nfa_builder(
             std::initializer_list<std::tuple<state_type, symbol_type, state_type>> data)
-            : nfa_builder {data.begin(), data.end()}
+            : nfa_builder{data.begin(), data.end()}
         {}
 
         auto const& compute_next(state_type state, symbol_type symbol) const
@@ -73,9 +73,12 @@ namespace chef {
             return result;
         }
 
-        auto num_states() const noexcept { return transition_table_.size(); }
+        auto num_states() const noexcept -> state_type { return transition_table_.size(); }
 
-        auto num_symbols() const noexcept { return transition_table_.front().size(); }
+        auto num_symbols() const noexcept -> symbol_type
+        {
+            return transition_table_.front().size();
+        }
 
         auto start_state() const -> state_type { return start_state_; }
 

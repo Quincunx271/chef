@@ -8,7 +8,7 @@ TEST_CASE("Simple dfa usage")
     auto dfa = chef::dfa(std::vector<state_t> {0, 1, 2},
         std::vector<state_t> {
             // clang-format off
-            /* from ; on: 0   1   2
+            /* from ; on: 0   1   2 */
             /*   0  */    0,  0,  2,
             /*   1  */    0,  2,  1,
             /*   2  */    2,  1,  0,

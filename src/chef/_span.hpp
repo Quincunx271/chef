@@ -2,16 +2,17 @@
 
 #include <array>
 #include <cassert>
-#include <concepts>
 #include <cstddef>
 #include <iterator>
 #include <type_traits>
+
+#include <chef/_std_concepts.hpp>
 
 namespace chef {
     namespace _concepts {
         template <typename Arr, typename ArrTo>
         concept SpanConvertible
-            = std::convertible_to<decltype(std::data(std::declval<Arr>())) (*)[], ArrTo>;
+            = _std::convertible_to<decltype(std::data(std::declval<Arr>())) (*)[], ArrTo>;
     }
 
     template <typename T>

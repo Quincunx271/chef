@@ -2,11 +2,13 @@
 
 #include <array>
 #include <cassert>
-#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <numeric>
 #include <type_traits>
+
+#include <chef/_range_concepts.hpp>
+#include <chef/_std_concepts.hpp>
 
 namespace chef {
     // row-major multidimensional array view
@@ -20,7 +22,7 @@ namespace chef {
         explicit constexpr _mdview(Container& container,
             Dims const... dims) noexcept //
             requires(sizeof...(Dims) == num_dimensions
-                && (std::convertible_to<std::size_t, Dims const> && ...))
+                && (_std::convertible_to<std::size_t, Dims const> && ...))
             : _mdview(container, {std::size_t(dims)...})
         {}
 
@@ -42,7 +44,7 @@ namespace chef {
 
         constexpr auto container() const -> Container* { return container_; }
 
-        template <std::convertible_to<std::size_t> T>
+        template <_std::convertible_to<std::size_t> T>
         constexpr auto operator[](T(&&indices)[num_dimensions]) const -> decltype(auto)
         {
             return (*this)[to_indices_array(indices)];
@@ -62,7 +64,7 @@ namespace chef {
             return at({std::size_t(indices)...});
         }
 
-        template <std::convertible_to<std::size_t> T>
+        template <_std::convertible_to<std::size_t> T>
         constexpr auto at(T(&&indices)[num_dimensions]) const -> decltype(auto)
         {
             return at(to_indices_array(indices));
@@ -82,7 +84,7 @@ namespace chef {
             return compute_index({std::size_t(indices)...});
         }
 
-        template <std::convertible_to<std::size_t> T>
+        template <_std::convertible_to<std::size_t> T>
         constexpr auto compute_index(T(&&indices)[num_dimensions]) const noexcept -> std::size_t
         {
             return compute_index(to_indices_array(indices));
@@ -126,11 +128,7 @@ namespace chef {
         }
 
         static constexpr auto compute_size(Container const& container) -> std::size_t
-            requires(requires {
-                // clang-format off
-                { std::size(container) } -> std::convertible_to<std::size_t>;
-                // clang-format on
-            })
+            requires _concepts::Sizeable<Container>
         {
             return size(container);
         }
