@@ -7,9 +7,13 @@
 #include <vector>
 
 #include <chef/_/bit_indices.hpp>
+#include <chef/_/filter.hpp>
+#include <chef/_/fold.hpp>
 #include <chef/_/function_objects.hpp>
 #include <chef/_/indexed.hpp>
 #include <chef/_/irange.hpp>
+#include <chef/_/lambda.hpp>
+#include <chef/_/reserve_as.hpp>
 #include <chef/_/transform.hpp>
 #include <chef/dfa/nfa.hpp>
 
@@ -104,11 +108,7 @@ namespace chef {
                 return combine_multistates(state_masks);
             };
 
-            transitions.emplace(std::piecewise_construct, //
-                std::forward_as_tuple(cur), //
-                std::forward_as_tuple(num_symbols));
-
-            for (auto const symbol : chef::_irange(dfa::symbol_type{0}, num_symbols)) {
+            auto const compute_next_multistate = [cur, &nfa](auto const symbol) {
                 auto bits = chef::_bit_indices(cur);
 
                 auto state_mappings = chef::_transform(bits, [&](auto const state) {
@@ -116,10 +116,23 @@ namespace chef {
                 });
                 auto const next = combine_multistates(state_mappings);
 
-                transitions[cur][symbol] = next;
+                return next;
+            };
 
-                if (state_set.insert(next).second) states.push_back(next);
-            }
+            auto symbols = chef::_irange(dfa::symbol_type{0}, num_symbols);
+
+            auto const& new_states
+                = transitions
+                      .emplace(std::piecewise_construct, std::forward_as_tuple(cur),
+                          std::forward_as_tuple( //
+                              chef::_fold(chef::_transform(symbols, compute_next_multistate),
+                                  chef::_reserve_as(std::vector<dfa::state_type>(), num_symbols),
+                                  chef::_by_value(CHEF_I_MEMFN_MUT(.push_back)))))
+                      .first->second;
+
+            states = chef::_fold(
+                chef::_filter(new_states, [&] CHEF_I_L(state_set.insert(it).second)),
+                std::move(states), chef::_by_value(CHEF_I_MEMFN_MUT(.push_back)));
         } while (cur_index < states.size());
 
         auto state_mapping = std::unordered_map<dfa::state_type, dfa::state_type>{};

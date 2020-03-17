@@ -88,5 +88,8 @@ namespace chef {
         auto end() -> sentinel { return {}; }
 
         auto iend() -> iterator { return iterator(nullptr); }
+
+        friend auto begin(_simple_range& rng) { return rng.begin(); }
+        friend auto end(_simple_range& rng) { return rng.iend(); }
     };
 }

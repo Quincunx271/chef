@@ -7,6 +7,7 @@
 #include <numeric>
 #include <type_traits>
 
+#include <chef/_/fwd.hpp>
 #include <chef/_/range_concepts.hpp>
 #include <chef/_/std_concepts.hpp>
 
@@ -144,7 +145,7 @@ namespace chef {
             -> std::array<std::size_t, num_dimensions>
         {
             return to_indices_array_impl(
-                std::forward<Range>(range), std::make_index_sequence<num_dimensions>());
+                CHEF_I_FWD(range), std::make_index_sequence<num_dimensions>());
         }
 
         template <typename Range, std::size_t... Is>
