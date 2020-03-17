@@ -4,8 +4,8 @@
   cxx_compiler: 'g++-9',
 
   debug: true,
-  cxx_flags: ['-fsanitize=address', '-std=c++2a', '-fconcepts'],
-  link_flags: ['-fsanitize=address'],
+  cxx_flags: '-fsanitize=address -std=c++2a -fconcepts',
+  link_flags: '-fsanitize=address',
 
   compiler_launcher: 'ccache',
 }
