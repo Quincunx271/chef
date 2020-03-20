@@ -130,9 +130,9 @@ namespace chef {
                                   chef::_by_value(CHEF_I_MEMFN_MUT(.push_back)))))
                       .first->second;
 
-            states = chef::_fold(
-                chef::_filter(new_states, [&] CHEF_I_L(state_set.insert(it).second)),
-                std::move(states), chef::_by_value(CHEF_I_MEMFN_MUT(.push_back)));
+            states
+                = chef::_fold(chef::_filter(new_states, [&] CHEF_I_L(state_set.insert(it).second)),
+                    std::move(states), chef::_by_value(CHEF_I_MEMFN_MUT(.push_back)));
         } while (cur_index < states.size());
 
         auto state_mapping = std::unordered_map<dfa::state_type, dfa::state_type>{};
@@ -146,9 +146,9 @@ namespace chef {
         auto transition_table = std::vector<dfa::state_type>();
         transition_table.reserve(num_states * num_symbols);
 
-        for (auto const [index, value] : chef::_indexed<dfa::state_type>(states)) {
+        for (auto const state : states) {
             for (auto const symbol : chef::_irange(0, num_symbols)) {
-                auto const dst = transitions[value][symbol];
+                auto const dst = transitions[state][symbol];
 
                 transition_table.push_back(state_mapping.at(dst));
             }
@@ -156,13 +156,13 @@ namespace chef {
 
         auto final_states = std::vector<dfa::state_type>();
 
-        for (auto const [index, value] : chef::_indexed<dfa::state_type>(states)) {
-            auto bits = chef::_bit_indices(value);
+        for (auto const state : states) {
+            auto bits = chef::_bit_indices(state);
             auto is_final = std::find_if(bits.begin(), bits.iend(), [&nfa](auto const bit) {
                 return nfa.is_final(bit);
             }) != bits.end();
 
-            if (is_final) final_states.push_back(value);
+            if (is_final) final_states.push_back(state);
         }
 
         return chef::dfa(states, transition_table, 0, std::move(final_states));
