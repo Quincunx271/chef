@@ -1,30 +1,60 @@
 #pragma once
 
+#include <bitset>
+#include <climits>
+#include <cstddef>
+
+#include <chef/_/lambda.hpp>
+#include <chef/_/overload.hpp>
 #include <chef/_/simple_range.hpp>
 #include <chef/_/std_concepts.hpp>
 
 namespace chef {
-    constexpr auto _bit_indices = []<_std::unsigned_integral T>(T bits) {
-        struct state_t {
-            T bits;
-            std::uint8_t index;
-        } state{
-            .bits = bits,
-            .index = 0,
-        };
+    template <std::size_t N>
+    struct _bit_indices_state_t {
+        std::bitset<N> bits;
+        std::size_t index = 0;
 
-        constexpr auto advance = [](state_t& state) {
-            do {
-                state.bits = static_cast<T>(state.bits >> 1);
-                ++state.index;
-            } while (state.bits && !(state.bits & 0x1));
-        };
+        constexpr bool has_remaining() const { return bits.any(); }
 
-        if (!(state.bits & 0x1)) advance(state);
+        constexpr void advance_to_next()
+        {
+            if (!has_remaining()) return;
+
+            while (!bits.test(0))
+                increment();
+        }
+
+        constexpr void advance()
+        {
+            increment();
+            advance_to_next();
+        }
+
+        constexpr void increment()
+        {
+            ++index;
+            bits >>= 1;
+        }
+    };
+
+    constexpr auto _bit_indices_impl = []<std::size_t N>(std::bitset<N> bs) {
+        using state_t = _bit_indices_state_t<N>;
+
+        auto state = state_t{bs};
+        state.advance_to_next();
 
         return _simple_range(state, //
-            [](auto&& state) -> std::uint8_t const& { return state.index; },
-            [](auto&& state) -> bool { return state.bits; }, //
-            advance);
+                                    // get():
+            chef::_mem_data<&state_t::index>, //
+            // has_next():
+            chef::_mem_fn<&state_t::has_remaining>, //
+            // next():
+            chef::_mem_fn<&state_t::advance>);
     };
+
+    constexpr auto _bit_indices = chef::_overload(
+        []<_std::unsigned_integral T>(
+            T bits) { return _bit_indices_impl(std::bitset<sizeof(T) * CHAR_BIT>(bits)); },
+        _bit_indices_impl);
 }

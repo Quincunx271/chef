@@ -20,7 +20,7 @@ namespace {
         auto indices = chef::_bit_indices(static_cast<TestType>(-1));
         auto const result = std::vector(indices.begin(), indices.iend());
 
-        auto expected = std::vector<std::uint8_t>(sizeof(TestType) * CHAR_BIT);
+        auto expected = std::vector<std::size_t>(sizeof(TestType) * CHAR_BIT);
         std::iota(expected.begin(), expected.end(), 0);
 
         CHECK(result == expected);
@@ -33,7 +33,7 @@ namespace {
         auto indices = chef::_bit_indices(static_cast<TestType>(1ull << bit));
         auto const result = std::vector(indices.begin(), indices.iend());
 
-        auto expected = std::vector<std::uint8_t>{bit};
+        auto expected = std::vector<std::size_t>{bit};
 
         CHECK(result == expected);
     }

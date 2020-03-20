@@ -22,3 +22,18 @@
     {                                                                                              \
         return (__VA_ARGS__);                                                                      \
     }
+
+namespace chef {
+    template <auto V>
+    constexpr auto _mem_data = [](auto&& obj) noexcept -> decltype(auto)
+    {
+        return (obj.*V);
+    };
+
+    template <auto F>
+    constexpr auto _mem_fn = [](auto&& obj, auto&&... args) noexcept(
+        noexcept((obj.*F)(CHEF_I_FWD(args)...))) -> decltype((obj.*F)(CHEF_I_FWD(args)...))
+    {
+        return (obj.*F)(CHEF_I_FWD(args)...);
+    };
+}
