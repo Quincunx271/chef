@@ -80,6 +80,46 @@ namespace chef {
         }
     };
 
+    class dfa2 {
+    public:
+        using state_type = nfa::state_type;
+        using symbol_type = nfa::symbol_type;
+
+        explicit dfa2(std::size_t const num_states, std::vector<state_type> transition_table_data,
+            state_type const start_state)
+            : transition_table_data_(std::move(transition_table_data))
+            , start_state_(std::move(start_state))
+            , num_states_(num_states)
+        {
+            assert(transition_table_data_.size() % num_states == 0);
+        }
+
+        auto num_states() const -> std::size_t { return num_states_; }
+
+        auto num_symbols() const -> std::size_t
+        {
+            return transition_table_data_.size() / num_states();
+        }
+
+        auto start_state() const -> state_type { return start_state_; }
+
+        auto compute_next(state_type const current, symbol_type const symbol) const -> state_type
+        {
+            return mdview()[{current, symbol}];
+        }
+
+    private:
+        std::vector<state_type> transition_table_data_;
+        state_type start_state_;
+        std::size_t num_states_;
+
+        auto mdview() const
+            -> decltype(_make_mdview<2>(transition_table_data_, num_states(), num_symbols()))
+        {
+            return _make_mdview<2>(transition_table_data_, num_states(), num_symbols());
+        }
+    };
+
     inline auto powerset_construction(nfa const& nfa) -> dfa
     {
         auto const original_states = nfa.states();
