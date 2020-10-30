@@ -15,11 +15,11 @@ namespace chef {
 
         template <typename F>
         explicit constexpr _deduce(F&& fn)
-            : fn_{CHEF_I_FWD(fn)}
-        {}
+            : fn_ {CHEF_I_FWD(fn)}
+        { }
 
         template <typename T>
-            constexpr operator T() && requires !std::is_reference_v<T>
+            constexpr operator T() && requires (!std::is_reference_v<T>)
         {
             return fn_(chef::_tag<T>);
         }
@@ -31,13 +31,13 @@ namespace chef {
         }
 
         template <typename T>
-        constexpr operator T const&() &&
+        constexpr operator T const &() &&
         {
             return fn_(chef::_tag<T const&>);
         }
 
         template <typename T>
-        constexpr operator T &&() &&
+        constexpr operator T&&() &&
         {
             return fn_(chef::_tag<T&&>);
         }
@@ -50,10 +50,10 @@ namespace chef {
     };
 
     template <typename F>
-    explicit _deduce(F)->_deduce<F>;
+    explicit _deduce(F) -> _deduce<F>;
 
     template <typename T>
-    concept bool _is_deduce = requires(T val)
+    concept _is_deduce = requires(T val)
     {
         typename std::remove_cvref_t<decltype(val)>::_chef_deduce_fn_tag;
     };

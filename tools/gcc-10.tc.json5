@@ -1,7 +1,7 @@
 {
   compiler_id: 'gnu',
-  c_compiler: 'gcc-9',
-  cxx_compiler: 'g++-9',
+  c_compiler: 'gcc-10',
+  cxx_compiler: 'g++-10',
 
   debug: true,
   cxx_flags: '-fsanitize=address -std=c++2a -fconcepts',

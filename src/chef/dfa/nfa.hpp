@@ -1,24 +1,22 @@
 #pragma once
 
 #include <algorithm>
+#include <cstdint>
 #include <initializer_list>
+#include <numeric>
 #include <ostream>
 #include <set>
+#include <span>
 #include <string>
 #include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <variant>
-
-#include <cstdint>
-#include <numeric>
-#include <set>
 #include <vector>
 
 #include <chef/_/function_objects.hpp>
 #include <chef/_/indexed.hpp>
 #include <chef/_/mdview.hpp>
-#include <chef/_/span.hpp>
 
 namespace chef {
     class nfa_builder {
@@ -57,8 +55,8 @@ namespace chef {
 
         explicit nfa_builder(
             std::initializer_list<std::tuple<state_type, symbol_type, state_type>> data)
-            : nfa_builder{data.begin(), data.end()}
-        {}
+            : nfa_builder {data.begin(), data.end()}
+        { }
 
         auto const& compute_next(state_type state, symbol_type symbol) const
         {
@@ -151,7 +149,7 @@ namespace chef {
                     auto location = transition_table_data_.insert(
                         transition_table_data_.end(), next.begin(), next.end());
 
-                    transition_table_.push_back(chef::_span<state_type const>(
+                    transition_table_.push_back(std::span<state_type const>(
                         transition_table_data_.data() + (location - transition_table_data_.begin()),
                         next.size()));
                 }
@@ -161,7 +159,7 @@ namespace chef {
         }
 
         auto compute_next(state_type state, symbol_type symbol) const
-            -> chef::_span<state_type const>
+            -> std::span<state_type const>
         {
             return mdview().at(symbol, state);
         }
@@ -214,7 +212,7 @@ namespace chef {
 
     private:
         // current state, next symbol, {next states}
-        std::vector<chef::_span<state_type const>> transition_table_;
+        std::vector<std::span<state_type const>> transition_table_;
 
         state_type num_states_ = {};
         symbol_type num_symbols_ = {};
