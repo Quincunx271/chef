@@ -32,9 +32,23 @@ namespace chef {
             , from_mstate_(CHEF_I_MOVE(from_mstate))
         {}
 
-        auto states() const -> auto const& /* Range<MState> */ { return states_; }
+        auto mstate(dfa2::state_type state) const -> MState const&
+        {
+            assert(state >= 0 && state < states_.size());
+            return states_[state];
+        }
 
         auto decode(MState const& state) const -> decltype(auto) { return from_mstate_(state); }
+
+        template <typename States, typename Pred>
+        auto states_matching(States&& states, Pred&& pred) const
+        {
+            return chef::_filter(CHEF_I_FWD(states), [pred, this](dfa2::state_type state) {
+                auto bits = decode(mstate(state));
+                return chef::_fold(CHEF_I_MOVE(bits), false,
+                    [&](bool acc, auto&& state) { return acc || pred(state); });
+            });
+        }
     };
 
     constexpr auto _powset_const_impl
@@ -49,9 +63,9 @@ namespace chef {
         auto const n_symbols = behavior.num_symbols(nfa);
         auto states = std::vector<mstate_type>({to_mstate(behavior.start_state(nfa))});
         auto state_set = std::unordered_set<mstate_type>({states[0]});
-        auto cur_index = std::size_t{0};
+        auto cur_index = std::size_t {0};
 
-        auto transitions = std::unordered_map<mstate_type, std::vector<mstate_type>>{};
+        auto transitions = std::unordered_map<mstate_type, std::vector<mstate_type>> {};
 
         do {
             auto const cur = states[cur_index++];
@@ -78,7 +92,7 @@ namespace chef {
                 return next;
             };
 
-            auto symbols = chef::_irange(dfa::symbol_type{0}, n_symbols);
+            auto symbols = chef::_irange(dfa::symbol_type {0}, n_symbols);
 
             auto const& new_states
                 = transitions
@@ -94,7 +108,7 @@ namespace chef {
                     CHEF_I_MOVE(states), chef::_by_value(CHEF_I_MEMFN_MUT(.push_back)));
         } while (cur_index < states.size());
 
-        auto state_mapping = std::unordered_map<mstate_type, dfa::state_type>{};
+        auto state_mapping = std::unordered_map<mstate_type, dfa::state_type> {};
         state_mapping.reserve(states.size());
 
         for (auto const [index, value] : chef::_indexed<dfa::state_type>(states)) {
@@ -126,7 +140,8 @@ namespace chef {
         assert(size(original_states) <= SmallSize
             && "NFA has too many states for current implementation");
 
-        return _powset_const_impl(nfa, behavior,
+        return _powset_const_impl(
+            nfa, behavior,
             [](auto const nfa_state) {
                 auto mstate = std::bitset<SmallSize>();
                 mstate.set(nfa_state);
@@ -142,7 +157,7 @@ namespace chef {
         },
         [](auto const& nfa) {
             return _powerset_construction2<SmallSize>(nfa,
-                chef::nfa_behavior{
+                chef::nfa_behavior {
                     .states = CHEF_I_MEMFN(.states),
                     .num_symbols = CHEF_I_MEMFN(.num_symbols),
                     .start_state = CHEF_I_MEMFN(.start_state),

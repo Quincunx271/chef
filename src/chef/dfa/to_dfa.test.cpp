@@ -1,5 +1,7 @@
 #include "./to_dfa.hpp"
 
+#include <unordered_set>
+
 #include <catch2/catch.hpp>
 
 TEST_CASE("Powerset construction")
@@ -15,5 +17,7 @@ TEST_CASE("Powerset construction")
     });
     auto const nfa = chef::nfa(builder);
 
-    auto dfa = chef::powerset_construction2<>(nfa);
+    auto [dfa, mstate_info] = chef::powerset_construction2<>(nfa);
+    std::unordered_set<chef::nfa::state_type> final_states{nfa.start_state()};
+    mstate_info.states_matching()
 }

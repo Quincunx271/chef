@@ -94,6 +94,8 @@ namespace chef {
             assert(transition_table_data_.size() % num_states == 0);
         }
 
+        auto states() const /* -> Range<state_type> */ { return _irange(0, num_states()); }
+
         auto num_states() const -> std::size_t { return num_states_; }
 
         auto num_symbols() const -> std::size_t
@@ -127,18 +129,18 @@ namespace chef {
         assert(original_states.size() <= 32 && "Currently, max NFA supported size is 64 states");
 
         auto const num_symbols = nfa.num_symbols();
-        auto states = std::vector<dfa::state_type>{(1u << nfa.start_state())};
-        auto state_set = std::unordered_set<dfa::state_type>{states[0]};
-        auto cur_index = std::size_t{0};
+        auto states = std::vector<dfa::state_type> {(1u << nfa.start_state())};
+        auto state_set = std::unordered_set<dfa::state_type> {states[0]};
+        auto cur_index = std::size_t {0};
 
-        auto transitions = std::unordered_map<dfa::state_type, std::vector<dfa::state_type>>{};
+        auto transitions = std::unordered_map<dfa::state_type, std::vector<dfa::state_type>> {};
 
         do {
             auto const cur = states[cur_index++];
 
             static constexpr auto combine_multistates = [](auto&& states) {
                 return std::accumulate(
-                    states.begin(), states.iend(), dfa::state_type{0}, std::bit_or{});
+                    states.begin(), states.iend(), dfa::state_type {0}, std::bit_or {});
             };
 
             static constexpr auto to_multistate = [](auto&& states) {
@@ -159,7 +161,7 @@ namespace chef {
                 return next;
             };
 
-            auto symbols = chef::_irange(dfa::symbol_type{0}, num_symbols);
+            auto symbols = chef::_irange(dfa::symbol_type {0}, num_symbols);
 
             auto const& new_states
                 = transitions
@@ -175,7 +177,7 @@ namespace chef {
                     std::move(states), chef::_by_value(CHEF_I_MEMFN_MUT(.push_back)));
         } while (cur_index < states.size());
 
-        auto state_mapping = std::unordered_map<dfa::state_type, dfa::state_type>{};
+        auto state_mapping = std::unordered_map<dfa::state_type, dfa::state_type> {};
         state_mapping.reserve(states.size());
 
         for (auto const [index, value] : chef::_indexed<dfa::state_type>(states)) {
