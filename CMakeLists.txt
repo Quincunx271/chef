@@ -30,15 +30,16 @@ endif()
 
 if(CHEF_DEVELOPMENT_SANITIZERS)
   if(CMAKE_CXX_COMPILER_ID STREQUAL Clang OR CMAKE_CXX_COMPILER_ID STREQUAL GCC)
-    add_compile_options(-fsanitize=address -fsanitize=memory)
-    add_link_options(-fsanitize=address -fsanitize=memory)
+    add_compile_options(-fsanitize=address -fsanitize=undefined)
+    add_link_options(-fsanitize=address -fsanitize=undefined)
   endif()
 endif()
 
 include(ChefFlags)
-chef_add_warnings_target(Chef::Warnings
+chef_add_warnings_target(_Chef_Warnings
   WERR ${CHEF_WARNINGS_AS_ERRORS}
 )
+add_library(Chef::Warnings ALIAS _Chef_Warnings)
 
 add_subdirectory(src)
 
@@ -56,7 +57,7 @@ endif()
 include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR "${CMAKE_INSTALL_LIBDIR}/cmake/Chef")
 
-install(TARGETS Chef
+install(TARGETS Chef _Chef_Warnings
   EXPORT Chef-Targets
   LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
   ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -79,7 +80,6 @@ write_basic_package_version_file(
   "${CMAKE_CURRENT_BINARY_DIR}/ChefConfigVersion.cmake"
   VERSION "${PROJECT_VERSION}"
   COMPATIBILITY SameMinorVersion
-  ARCH_INDEPENDENT
 )
 
 install(FILES

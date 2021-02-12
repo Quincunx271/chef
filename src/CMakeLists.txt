@@ -1,4 +1,4 @@
-file(GLOB_RECURSE sources "Chef/*.hpp" "Chef/*.cpp")
+file(GLOB_RECURSE sources "chef/*.hpp" "chef/*.cpp")
 
 add_library(Chef ${sources})
 add_library(Chef::Chef ALIAS Chef)

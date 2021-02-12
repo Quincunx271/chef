@@ -1,13 +1,11 @@
-find_package(Catch2 REQUIRED)
-
 file(GLOB_RECURSE test_sources CONFIGURE_DEPENDS "*.test.cpp")
 
 add_executable(test.Chef ${test_sources})
 target_link_libraries(test.Chef
   PRIVATE
     Chef::Chef
-    Catch2::Catch2
     Chef::Warnings
+    CONAN_PKG::catch2
 )
 target_compile_options(test.Chef
   PRIVATE
