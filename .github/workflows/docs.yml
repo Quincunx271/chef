@@ -1,0 +1,102 @@
+name: Publish Docs
+
+# on:
+#   push:
+#     branches: [ main ]
+#   release:
+#     types: [ published ]
+
+jobs:
+  publish-docs:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        cxx: [g++-10]
+        std: [20]
+        build_type: [Debug]
+
+    steps:
+    - name: Install Sphinx & Dependencies
+      run: |
+        pip3 install --user sphinx
+        source ~/.profile
+        sphinx-build --version
+        which sphinx-build
+        pip3 install --user semver
+
+    - uses: actions/checkout@v2
+      with:
+        path: git-head
+
+    - uses: actions/checkout@v2
+      with:
+        ref: gh-pages
+        path: gh-pages
+
+    - name: Get Git Info
+      id: gitinfo
+      working-directory: git-head
+      run: |
+        echo "::set-output name=COMMIT_HASH::$(git rev-parse --short HEAD)"
+
+    - name: Configure Docs
+      id: config
+      shell: python
+      working-directory: git-head
+      run: |
+        import os
+
+        if '${{ github.event_name }}' == 'release':
+          release = os.environ['GITHUB_REF'].split('/')[-1]
+          if release.startswith('v'):
+            release = release[1:]
+          print('::set-output name=DOCS_DIR::' + release)
+          print('::set-output name=COMMIT_MSG::Publish docs for release ' + release)
+        else:
+          assert '${{ github.event_name }}' == 'push'
+          print('::set-output name=DOCS_DIR::main')
+          print('::set-output name=COMMIT_MSG::Update docs for commit ' + '${{ steps.gitinfo.outputs.COMMIT_HASH }}')
+
+    - name: Configure CMake
+      working-directory: git-head
+      run: |
+        source ~/.profile
+        cmake -S. -Bbuild                                  \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}      \
+          -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}           \
+          -DCMAKE_CXX_STANDARD=${{ matrix.std }}           \
+          -DCHEF_WARNINGS_AS_ERRORS=ON                   \
+          -DBUILD_TESTING=OFF                              \
+          -DCHEF_BUILD_DOCS=ON                           \
+          "-DCMAKE_INSTALL_PREFIX=$PWD/build/install"
+
+    - name: Build Docs
+      working-directory: git-head
+      run: cmake --build build --config ${{ matrix.build_type }} --target docs
+
+    - name: Install
+      working-directory: git-head
+      run: cmake --build build --config ${{ matrix.build_type }} -j2 --target install
+
+    - name: Publish docs
+      working-directory: gh-pages
+      run: |
+        # Git requires user email and name to do commits.
+        # Set user email to the email of the last commit, as that's about the best we can do
+        git config --local user.email "$(git log -n 1 --pretty=format:'%ae')"
+        git config --local user.name 'GitHub Actions'
+
+        rm -rf '${{ steps.config.outputs.DOCS_DIR }}'
+        cp -r '${{ github.workspace }}/git-head/build/install/share/doc/CHEF/html' '${{ steps.config.outputs.DOCS_DIR }}'
+
+        python3 '${{ github.workspace }}/git-head/.ci/update-version-selector-js.py' '${{ github.workspace }}/git-head/docs/website/version-selector.js' '${{ github.workspace }}/git-head/docs/website/index.html'
+
+        if [[ `git status --porcelain` ]]; then
+          echo "Changes found"
+          git add -A
+          git commit -m '${{ steps.config.outputs.COMMIT_MSG }}'
+          git push
+        else
+          echo "No changes found"
+        fi
