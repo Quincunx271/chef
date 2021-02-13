@@ -20,8 +20,13 @@ BraceWrapping:
   SplitEmptyNamespace: true
 ColumnLimit: 100
 IndentWidth: 4
+IndentRequires: true
+IndentPPDirectives: AfterHash
 Cpp11BracedListStyle: true
 NamespaceIndentation: All
 Standard: Cpp11
+SpaceBeforeCpp11BracedList: false
+UseTab: AlignWithSpaces
+TabWidth: 4
 PenaltyReturnTypeOnItsOwnLine: 50
 PenaltyBreakBeforeFirstCallParameter: 50

@@ -15,6 +15,10 @@ target_link_options(test.Chef
   PRIVATE
     ${link_options}
 )
+target_include_directories(test.Chef
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 include(Catch)
 

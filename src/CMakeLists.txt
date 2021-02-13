@@ -4,7 +4,7 @@ add_library(Chef ${sources})
 add_library(Chef::Chef ALIAS Chef)
 target_include_directories(Chef
   PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/.>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 target_compile_features(Chef

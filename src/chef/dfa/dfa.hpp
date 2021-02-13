@@ -6,61 +6,61 @@
 #include <vector>
 
 namespace chef {
-    using state_type = std::uint32_t;
-    using symbol_type = std::uint8_t;
+	using state_type = std::uint32_t;
+	using symbol_type = std::uint8_t;
 
-    struct fa_edge {
-        state_type from;
-        state_type to;
-        symbol_type on;
-    };
+	struct fa_edge {
+		state_type from;
+		state_type to;
+		symbol_type on;
+	};
 
-    class dfa {
-    private:
-        // A 2d array.
-        std::vector<state_type> transition_table_;
-        state_type num_states_;
-        symbol_type num_symbols_;
+	class dfa {
+	private:
+		// A 2d array.
+		std::vector<state_type> transition_table_;
+		state_type num_states_;
+		symbol_type num_symbols_;
 
-    public:
-        explicit dfa(
-            state_type num_states, symbol_type num_symbols, std::vector<fa_edge> const& edge_list)
-            : num_states_(num_states)
-            , num_symbols_(num_symbols)
-        {
-            assert(edge_list.size() == num_states * num_symbols);
-            transition_table_.resize(num_states * num_symbols);
+	public:
+		explicit dfa(
+			state_type num_states, symbol_type num_symbols, std::vector<fa_edge> const& edge_list)
+			: num_states_(num_states)
+			, num_symbols_(num_symbols)
+		{
+			assert(edge_list.size() == num_states * num_symbols);
+			transition_table_.resize(num_states * num_symbols);
 
-            for (auto const [from, to, on] : edge_list) {
-                at(from, on) = to;
-            }
-        }
+			for (auto const [from, to, on] : edge_list) {
+				at(from, on) = to;
+			}
+		}
 
-    public:
-        auto num_states() const -> state_type
-        {
-            return num_states_;
-        }
+	public:
+		auto num_states() const -> state_type
+		{
+			return num_states_;
+		}
 
-        auto process(state_type from, symbol_type on) const -> state_type
-        {
-            return at(from, on);
-        }
+		auto process(state_type from, symbol_type on) const -> state_type
+		{
+			return at(from, on);
+		}
 
-    private:
-        auto at(state_type from, symbol_type on) const -> state_type const&
-        {
-            assert(from < num_states_);
-            assert(on < num_symbols_);
-            std::size_t const index = num_symbols_ * from + on;
-            assert(index < transition_table_.size());
+	private:
+		auto at(state_type from, symbol_type on) const -> state_type const&
+		{
+			assert(from < num_states_);
+			assert(on < num_symbols_);
+			std::size_t const index = num_symbols_ * from + on;
+			assert(index < transition_table_.size());
 
-            return transition_table_[index];
-        }
+			return transition_table_[index];
+		}
 
-        auto at(state_type from, symbol_type on) -> state_type&
-        {
-            return const_cast<state_type&>(std::as_const(*this).at(from, on));
-        }
-    };
+		auto at(state_type from, symbol_type on) -> state_type&
+		{
+			return const_cast<state_type&>(std::as_const(*this).at(from, on));
+		}
+	};
 }
