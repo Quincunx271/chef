@@ -3,7 +3,21 @@ AllowShortIfStatementsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: false
 AlwaysBreakTemplateDeclarations: true
 BasedOnStyle: WebKit
-BreakBeforeBraces: Attach
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterEnum: false
+  AfterControlStatement: MultiLine
+  AfterFunction: true
+  AfterNamespace: false
+  BeforeCatch: false
+  BeforeElse: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: true
 ColumnLimit: 100
 IndentWidth: 4
 Cpp11BracedListStyle: true
