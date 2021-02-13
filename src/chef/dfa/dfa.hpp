@@ -1,20 +1,12 @@
 #pragma once
 
 #include <cassert>
-#include <cstdint>
 #include <utility>
 #include <vector>
 
+#include <chef/dfa/fa.hpp>
+
 namespace chef {
-	using state_type = std::uint32_t;
-	using symbol_type = std::uint8_t;
-
-	struct fa_edge {
-		state_type from;
-		state_type to;
-		symbol_type on;
-	};
-
 	class dfa {
 	private:
 		// A 2d array.

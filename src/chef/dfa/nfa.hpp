@@ -1,12 +1,11 @@
 #pragma once
 
 #include <cassert>
-#include <cstdint>
 #include <span>
 #include <utility>
 #include <vector>
 
-#include <chef/dfa/dfa.hpp>
+#include <chef/dfa/fa.hpp>
 
 namespace chef {
 	class nfa {
