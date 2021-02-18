@@ -34,6 +34,11 @@ namespace chef {
 			return num_states_;
 		}
 
+		auto num_symbols() const -> symbol_type
+		{
+			return num_symbols_;
+		}
+
 		auto process(state_type from, symbol_type on) const -> state_type
 		{
 			return at(from, on);

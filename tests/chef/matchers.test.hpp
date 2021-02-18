@@ -33,4 +33,32 @@ namespace {
 			return "IsPermutation: " + ::Catch::Detail::stringify(target);
 		}
 	};
+
+	template <std::ranges::range Range>
+		requires requires(Range const& c, std::ranges::range_value_t<Range> val)
+		{
+			// clang-format off
+			{ c.contains(val) } -> std::same_as<bool>;
+			// clang-format on
+		}
+	class Contains : public Catch::MatcherBase<Range> {
+	private:
+		using T = std::ranges::range_value_t<Range>;
+		T value;
+
+	public:
+		explicit Contains(T value)
+			: value(value)
+		{ }
+
+		bool match(Range const& range) const override
+		{
+			return range.contains(value);
+		}
+
+		std::string describe() const override
+		{
+			return "Contains: " + ::Catch::Detail::stringify(value);
+		}
+	};
 }
