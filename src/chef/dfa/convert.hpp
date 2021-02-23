@@ -81,8 +81,10 @@ namespace chef {
 			}
 		}
 
+		auto const num_states = static_cast<state_type>(discovered_states.size());
+
 		return std::pair{
-			chef::dfa(discovered_states.size(), nfa.num_symbols(), edges),
+			chef::dfa(num_states, nfa.num_symbols(), edges),
 			std::move(dfa_categories),
 		};
 	}
