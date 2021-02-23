@@ -1,0 +1,6 @@
+{
+    name: 'chef',
+    version: '0.0.1',
+    namespace: 'Quincunx271',
+    test_driver: 'Catch-Main',
+}
