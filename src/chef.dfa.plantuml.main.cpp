@@ -9,6 +9,7 @@
 #include <chef/_/ranges.hpp>
 #include <chef/dfa/convert.hpp>
 #include <chef/dfa/dfa.hpp>
+#include <chef/dfa/minimize.hpp>
 #include <chef/dfa/nfa.hpp>
 #include <chef/dfa/plantuml.hpp>
 
@@ -26,8 +27,12 @@ Sample usage:
 printf '0 1 2\n1 0 1\n2 0 0\n2 1 1\n1 0 0' | chef.dfa.plantuml dfa \
     | java -jar plantuml.jar -pipe >dfa.png
 
-printf '0 1 2\n1 0 1\n2 0 0\n2 1 1\n1 0 0\n0 2 0\n' | chef.dfa.plantuml --minimize --final=2 dfa |
-java -jar plantuml.jar -pipe >dfa.png
+printf '0 1 2\n1 0 1\n2 0 0\n2 1 1\n1 0 0\n0 2 0\n' | chef.dfa.plantuml --minimize --final=2 dfa | \
+    java -jar plantuml.jar -pipe >dfa.png
+
+// Wikipedia example:
+printf '0 1 0\n0 2 1\n1 0 0\n1 3 1\n2 4 0\n2 5 1\n3 4 0\n3 5 1\n4 4 0\n4 5 1\n5 5 0\n5 5 1\n' | \
+    chef.dfa.plantuml --minimize --final=2,3,4 dfa | java -jar plantuml.jar -pipe >dfa.png
 */
 
 void print_usage()
@@ -87,7 +92,7 @@ int main(int argc, char** argv)
 	if (is_dfa) {
 		auto [dfa, categories] = chef::to_dfa(nfa, {final_states});
 		if (minimize) {
-			std::cerr << "DFA minimization currently unsupported\n";
+			std::tie(dfa, categories) = chef::minimize(dfa, categories);
 		}
 
 		std::unordered_map<chef::state_type, std::string> labels;
