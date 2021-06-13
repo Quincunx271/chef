@@ -185,3 +185,90 @@ TEST_CASE("dfa minimization works - difference mod 4")
 	REQUIRE(categories.size() == 1);
 	CHECK_THAT(::to_vector(categories[0]), IsPermutationOfVector({st0}));
 }
+
+TEST_CASE("dfa minimization works - sum mod 5 with many symbols")
+{
+	// L = {sum(d for d in s) == 3 mod 5}.
+	// S = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	// Inefficient DFA to capture this: sum each kind of digit individually, then combine.
+	// 12-dimensional "grid".
+	auto const p1 = [](unsigned int n) { return (n + 1) % 5; };
+	std::vector<chef::fa_edge> edges;
+	std::unordered_set<chef::state_type> finals;
+
+	for (unsigned int ones = 0; ones < 5; ++ones) {
+		for (unsigned int twos = 0; twos < 5; ++twos) {
+			for (unsigned int threes = 0; threes < 5; ++threes) {
+				for (unsigned int fours = 0; fours < 5; ++fours) {
+					if ((ones * 1 + twos * 2 + threes * 3 + fours * 4) % 5 == 3)
+						finals.insert((((((ones * 5) + twos) * 5) + threes) * 5) + fours);
+
+					for (chef::symbol_type const zero : std::vector<chef::symbol_type>{0, 5, 10})
+						edges.push_back(chef::fa_edge{
+							.from = (((((ones * 5) + twos) * 5) + threes) * 5) + fours,
+							.to = (((((ones * 5) + twos) * 5) + threes) * 5) + fours,
+							.on = zero,
+						});
+					for (chef::symbol_type const one : std::vector<chef::symbol_type>{1, 6, 11})
+						edges.push_back(chef::fa_edge{
+							.from = (((((ones * 5) + twos) * 5) + threes) * 5) + fours,
+							.to = (((((p1(ones) * 5) + twos) * 5) + threes) * 5) + fours,
+							.on = one,
+						});
+					for (chef::symbol_type const two : std::vector<chef::symbol_type>{2, 7, 12})
+						edges.push_back(chef::fa_edge{
+							.from = (((((ones * 5) + twos) * 5) + threes) * 5) + fours,
+							.to = (((((ones * 5) + p1(twos)) * 5) + threes) * 5) + fours,
+							.on = two,
+						});
+					for (chef::symbol_type const three : std::vector<chef::symbol_type>{3, 8})
+						edges.push_back(chef::fa_edge{
+							.from = (((((ones * 5) + twos) * 5) + threes) * 5) + fours,
+							.to = (((((ones * 5) + twos) * 5) + p1(threes)) * 5) + fours,
+							.on = three,
+						});
+					for (chef::symbol_type const four : std::vector<chef::symbol_type>{4, 9})
+						edges.push_back(chef::fa_edge{
+							.from = (((((ones * 5) + twos) * 5) + threes) * 5) + fours,
+							.to = (((((ones * 5) + twos) * 5) + threes) * 5) + p1(fours),
+							.on = four,
+						});
+				}
+			}
+		}
+	}
+	// Num states: 5**4
+	auto const dfa_in = chef::dfa(625, 13, edges);
+
+	auto [dfa, categories] = chef::minimize(dfa_in, {finals});
+
+	// Minimized DFA: we're working mod 5, so only 5 states.
+	CHECK(dfa.num_symbols() == 13);
+	CHECK(dfa.num_states() == 5);
+
+	chef::state_type const st0 = 0;
+	chef::state_type const st1 = dfa.process(st0, 1);
+	chef::state_type const st2 = dfa.process(st1, 1);
+	chef::state_type const st3 = dfa.process(st2, 1);
+	chef::state_type const st4 = dfa.process(st3, 1);
+	CHECK_THAT(::to_vector(dfa.states()), IsPermutationOfVector({st0, st1, st2, st3, st4}));
+
+	CHECK(dfa.process(st4, 1) == st0); // Should wrap around.
+
+	chef::state_type const sts[] = {st0, st1, st2, st3, st4};
+	for (std::size_t const from_index : chef::detail::indices(sts)) {
+		chef::state_type const from = sts[from_index];
+
+		for (chef::symbol_type const sym : dfa.symbols()) {
+			chef::state_type const to = dfa.process(from, sym);
+			std::size_t const to_index
+				= std::distance(std::begin(sts), std::find(std::begin(sts), std::end(sts), to));
+
+			CAPTURE(from_index, to_index, std::size_t(sym));
+			CHECK((from_index + sym) % 5 == to_index);
+		}
+	}
+
+	REQUIRE(categories.size() == 1);
+	CHECK_THAT(::to_vector(categories[0]), IsPermutationOfVector({st3}));
+}

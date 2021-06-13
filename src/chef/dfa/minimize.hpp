@@ -32,11 +32,11 @@ namespace chef {
 					? 0x01000193
 					: 0x00000100000001b3ull;
 
-				auto adjusted = views::common(
-					views::transform(states, [](auto x) { return prime * (x + 1); }));
+				auto adjusted = views::common(views::transform(
+					states, [prime](auto x) -> std::size_t { return prime * (x + 1); }));
 
-				// Note: plus would be a very bad hash because of the Central Limit Theorem.
-				// Basically, plus would make collisions _very likely_.
+				// Note: plus would be likely be a very bad hash because of the Central Limit
+				// Theorem. Basically, plus would make collisions _very likely_.
 				return std::accumulate(adjusted.begin(), adjusted.end(), offset, std::bit_xor{});
 			}
 		};
@@ -92,11 +92,6 @@ namespace chef {
 		inline std::vector<hashset<chef::state_type>> hopcroft(chef::dfa const& dfa,
 			std::vector<std::unordered_set<chef::state_type>> const& categories)
 		{
-			using detail::comm_hashmap;
-			using detail::comm_hashset;
-			using detail::hashmap;
-			using detail::hashset;
-
 			namespace views = std::ranges::views;
 			// Implements DFA minimization by Hopcroft's algorithm.
 			// Note: single-letter capital "variable names" (sometimes comments) come from
