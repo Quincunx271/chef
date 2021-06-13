@@ -33,8 +33,10 @@ namespace chef::detail {
 		return detail::to_container<Container>(CHEF_FWD(rng));
 	}
 
+	template <typename IndexType = std::size_t>
 	auto indices(std::ranges::sized_range auto const& rng)
 	{
-		return std::ranges::views::iota(std::size_t(0), std::ranges::size(rng));
+		return std::ranges::views::iota(
+			IndexType(0), static_cast<IndexType>(std::ranges::size(rng)));
 	}
 }

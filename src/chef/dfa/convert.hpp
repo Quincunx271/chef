@@ -11,7 +11,7 @@
 #include <chef/dfa/nfa.hpp>
 
 namespace chef {
-	std::pair<chef::dfa, std::vector<std::unordered_set<chef::state_type>>> to_dfa(
+	inline std::pair<chef::dfa, std::vector<std::unordered_set<chef::state_type>>> to_dfa(
 		chef::nfa const& nfa, std::vector<std::unordered_set<chef::state_type>> const& categories)
 	{
 		using mstate_type = std::vector<chef::state_type>;
