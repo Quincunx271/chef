@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include <chef/_/ranges.hpp>
 #include <chef/dfa/fa.hpp>
 
 namespace chef {
@@ -34,9 +35,19 @@ namespace chef {
 			return num_states_;
 		}
 
+		auto states() const
+		{
+			return std::ranges::views::iota(state_type(0), num_states());
+		}
+
 		auto num_symbols() const -> symbol_type
 		{
 			return num_symbols_;
+		}
+
+		auto symbols() const
+		{
+			return std::ranges::views::iota(symbol_type(0), num_symbols());
 		}
 
 		auto process(state_type from, symbol_type on) const -> std::span<state_type const>
