@@ -1,0 +1,4 @@
+{
+    name: 'chef',
+    uses: ['quincunx271/terse-lambda'],
+}

@@ -31,6 +31,10 @@ jobs:
       with:
         path: src
 
+    - name: Add DDS repos
+      run: |
+        ${{ runner.workspace }}/bin/dds pkg repo add "https://quincunx271.github.io/dds-repos/public"
+
     - name: Build
       run: |
         cd src
