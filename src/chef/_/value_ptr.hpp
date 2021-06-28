@@ -61,6 +61,16 @@ namespace chef::detail {
 			return value.get();
 		}
 
+		T* get()
+		{
+			return value.get();
+		}
+
+		T const* get() const
+		{
+			return value.get();
+		}
+
 		explicit operator bool() const
 		{
 			return static_cast<bool>(value);
