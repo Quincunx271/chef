@@ -3,7 +3,7 @@
 
 #include <catch2/catch.hpp>
 
-#define ENGINES chef::re_backtracking_engine
+#define ENGINES chef::re_derivative_engine
 
 TEMPLATE_TEST_CASE("Simple match", "", ENGINES)
 {

@@ -9,7 +9,7 @@
 
 #include <tl/tl.hpp>
 
-#include <chef/_/one_of.hpp>
+#include <chef/_/concepts.hpp>
 #include <chef/_/overload.hpp>
 #include <chef/_/ranges.hpp>
 
@@ -243,16 +243,17 @@ namespace {
 							stack.emplace(re.pieces[cur.index - 1].get(), cur.remaining);
 						},
 						[&](chef::re_cat const& re) {
-								cur.finished_index = 0; // mark that we finished evaluating this RE.
+							cur.finished_index = 0; // mark that we finished evaluating this RE.
 							// if (cur.index >= re.pieces.size()) {
-							// 	return;
-							// }
+					        // 	return;
+					        // }
 
 							// ++cur.index;
 							stack.emplace(re.pieces.front().get(), cur.remaining);
 						},
 						[&](chef::re_star const& re) {
-							// TODO: Fix this: if we backtrack to here, we unconditionally try again...
+							// TODO: Fix this: if we backtrack to here, we unconditionally try
+					        // again...
 							cur.finished_index = 0; // Maybe this fixes it?
 							stack.emplace(re.value.get(), cur.remaining);
 						},

@@ -10,6 +10,7 @@
 
 #include <tl/tl.hpp>
 
+#include <chef/_/concepts.hpp>
 #include <chef/_/overload.hpp>
 #include <chef/_/value_ptr.hpp>
 
@@ -63,24 +64,24 @@ namespace chef {
 							std::move_iterator(rhs.pieces.end()));
 						return re(std::move(lhs));
 					},
-					[](re_union lhs, auto rhs) -> re {
+					[](re_union lhs, detail::IsNot<re_empty> auto rhs) -> re {
 						lhs.pieces.emplace_back(std::make_unique<re>(std::move(rhs)));
 						return re(std::move(lhs));
 					},
-					[](auto lhs, re_union rhs) -> re {
+					[](detail::IsNot<re_empty> auto lhs, re_union rhs) -> re {
 						rhs.pieces.emplace(
 							rhs.pieces.begin(), std::make_unique<re>(std::move(lhs)));
 						return re(std::move(rhs));
 					},
-					[](auto lhs, auto rhs) -> re {
+					[](detail::IsNot<re_empty> auto lhs, detail::IsNot<re_empty> auto rhs) -> re {
 						re_union result;
 						result.pieces.emplace_back(std::make_unique<re>(std::move(lhs)));
 						result.pieces.emplace_back(std::make_unique<re>(std::move(rhs)));
 						return re(std::move(result));
 					},
 					[](re_empty, re_empty) -> re { return re(re_empty{}); },
-					[](std::same_as<re_empty> auto, auto rhs) -> re { return re(std::move(rhs)); },
-					[](auto lhs, std::same_as<re_empty> auto) -> re { return re(std::move(lhs)); },
+					[](re_empty, auto rhs) -> re { return re(std::move(rhs)); },
+					[](auto lhs, re_empty) -> re { return re(std::move(lhs)); },
 				},
 				std::move(lhs.value), std::move(rhs.value));
 
@@ -89,42 +90,48 @@ namespace chef {
 
 		friend re operator<<(re lhs, re rhs)
 		{
-			variant_type result = std::visit(
+			return std::visit(
 				detail::overload{
-					[](re_cat lhs, re_cat rhs) -> variant_type {
+					[](re_cat lhs, re_cat rhs) -> re {
 						lhs.pieces.insert(lhs.pieces.end(), std::move_iterator(rhs.pieces.begin()),
 							std::move_iterator(rhs.pieces.end()));
-						return lhs;
+						return re(std::move(lhs));
 					},
-					[](re_cat lhs, auto rhs) -> variant_type {
-						lhs.pieces.emplace_back(std::make_unique<re>(std::move(rhs)));
-						return lhs;
+					[](re_cat lhs, detail::IsNot<re_empty> auto rhs) -> re {
+						if_not_epsilon(rhs,
+							[&] { lhs.pieces.emplace_back(std::make_unique<re>(std::move(rhs))); });
+						return re(std::move(lhs));
 					},
-					[](auto lhs, re_cat rhs) -> variant_type {
-						rhs.pieces.emplace(
-							rhs.pieces.begin(), std::make_unique<re>(std::move(lhs)));
-						return rhs;
+					[](detail::IsNot<re_empty> auto lhs, re_cat rhs) -> re {
+						if_not_epsilon(lhs, [&] {
+							rhs.pieces.emplace(
+								rhs.pieces.begin(), std::make_unique<re>(std::move(lhs)));
+						});
+						return re(std::move(rhs));
 					},
-					[](auto lhs, auto rhs) -> variant_type {
+					[](detail::IsNot<re_empty> auto lhs, detail::IsNot<re_empty> auto rhs) -> re {
 						re_cat result;
-						result.pieces.emplace_back(std::make_unique<re>(std::move(lhs)));
-						result.pieces.emplace_back(std::make_unique<re>(std::move(rhs)));
-						return result;
+						if_not_epsilon(lhs, [&] {
+							result.pieces.emplace_back(std::make_unique<re>(std::move(lhs)));
+						});
+						if_not_epsilon(rhs, [&] {
+							result.pieces.emplace_back(std::make_unique<re>(std::move(rhs)));
+						});
+						if (result.pieces.size() == 1) {
+							return re(std::move(*result.pieces.front()));
+						} else if (result.pieces.empty()) {
+							return re(re_lit(""));
+						}
+						return re(std::move(result));
 					},
-					[](re_lit lhs, re_lit rhs) -> variant_type {
-						return re_lit{std::move(lhs.value) + std::move(rhs.value)};
+					[](re_lit lhs, re_lit rhs) -> re {
+						return re(re_lit{std::move(lhs.value) + std::move(rhs.value)});
 					},
-					[](re_empty, re_empty) -> variant_type { return variant_type(re_empty{}); },
-					[](std::same_as<re_empty> auto, auto) -> variant_type {
-						return variant_type(re_empty{});
-					},
-					[](auto, std::same_as<re_empty> auto) -> variant_type {
-						return variant_type(re_empty{});
-					},
+					[](re_empty, auto&&) -> re { return re(re_empty{}); },
+					[](auto&&, re_empty) -> re { return re(re_empty{}); },
+					[](re_empty, re_empty) -> re { return re(re_empty{}); },
 				},
 				std::move(lhs.value), std::move(rhs.value));
-
-			return re(std::move(result));
 		}
 
 		re operator*() const&
@@ -170,5 +177,17 @@ namespace chef {
 
 	private:
 		std::ostream& print_to(std::ostream&) const;
+
+		template <typename R>
+		static void if_not_epsilon(R const& re, auto&& fn)
+		{
+			if constexpr (std::same_as<chef::re_lit, R>) {
+				if (!re.value.empty()) {
+					fn();
+				}
+			} else {
+				fn();
+			}
+		}
 	};
 }
