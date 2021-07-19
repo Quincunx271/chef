@@ -17,6 +17,8 @@ namespace chef {
 		symbol_type num_symbols_;
 
 	public:
+		static constexpr symbol_type eps = 0;
+
 		explicit nfa(
 			state_type num_states, symbol_type num_symbols, std::vector<fa_edge> const& edge_list)
 			: num_states_(num_states)

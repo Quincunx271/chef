@@ -20,13 +20,13 @@ namespace {
 
 TEST_CASE("nfa -> dfa conversion works")
 {
-	auto nfa = chef::nfa(4, 2,
+	auto nfa = chef::nfa(4, 3,
 		{
-			{.from = 0, .to = 1, .on = 0},
-			{.from = 0, .to = 0, .on = 0},
+			{.from = 0, .to = 1, .on = 1},
 			{.from = 0, .to = 0, .on = 1},
-			{.from = 1, .to = 2, .on = 0},
-			{.from = 2, .to = 3, .on = 1},
+			{.from = 0, .to = 0, .on = 2},
+			{.from = 1, .to = 2, .on = 1},
+			{.from = 2, .to = 3, .on = 2},
 		});
 
 	auto [dfa, categories] = chef::to_dfa(nfa,
@@ -39,7 +39,7 @@ TEST_CASE("nfa -> dfa conversion works")
 			{2, 3},
 		});
 
-	CHECK(dfa.num_symbols() == nfa.num_symbols());
+	CHECK(dfa.num_symbols() == nfa.num_symbols() - 1);
 
 	// Found by manually doing the conversion:
 	CHECK(dfa.num_states() == 4);
@@ -69,4 +69,51 @@ TEST_CASE("nfa -> dfa conversion works")
 	// 5: {2, 3}
 	CHECK_THAT(::to_vector(categories[4]), IsPermutationOfVector({st01, st012}));
 	CHECK_THAT(::to_vector(categories[5]), IsPermutationOfVector({st012, st03}));
+}
+
+TEST_CASE("nfa -> dfa conversion works with epsilons")
+{
+	// NFA example from wikipedia's article on the powerset construction,
+	// except accept states are much fewer.
+	auto nfa = chef::nfa(4, 3,
+		{
+			{.from = 0, .to = 2, .on = chef::nfa::eps},
+			{.from = 0, .to = 1, .on = 1},
+			{.from = 1, .to = 1, .on = 2},
+			{.from = 1, .to = 3, .on = 2},
+			{.from = 2, .to = 1, .on = chef::nfa::eps},
+			{.from = 2, .to = 3, .on = 1},
+			{.from = 3, .to = 2, .on = 1},
+		});
+
+	auto [dfa, categories] = chef::to_dfa(nfa,
+		{
+			{3},
+		});
+
+	CHECK(dfa.num_symbols() == nfa.num_symbols() - 1);
+
+	CHECK(dfa.num_states() == 5);
+	chef::state_type const st123 = 0;
+	chef::state_type const st24 = dfa.process(st123, 0);
+	chef::state_type const st23 = dfa.process(st24, 0);
+	chef::state_type const st4 = dfa.process(st23, 0);
+	chef::state_type const st5 = dfa.process(st4, 1);
+	CHECK_THAT(::to_vector(std::set({st123, st24, st23, st4, st5})),
+		IsPermutationOfVector({st123, st24, st23, st4, st5}));
+
+	// Redundant checks are commented out:
+	// CHECK(dfa.process(st123, 0) == st24);
+	CHECK(dfa.process(st123, 1) == st24);
+	// CHECK(dfa.process(st24, 0) == st23);
+	CHECK(dfa.process(st24, 1) == st24);
+	// CHECK(dfa.process(st23, 0) == st4);
+	CHECK(dfa.process(st23, 1) == st24);
+	CHECK(dfa.process(st4, 0) == st23);
+	// CHECK(dfa.process(st4, 1) == st5);
+	CHECK(dfa.process(st5, 0) == st5);
+	CHECK(dfa.process(st5, 1) == st5);
+
+	REQUIRE(categories.size() == 1);
+	CHECK_THAT(::to_vector(categories[0]), IsPermutationOfVector({st24, st4}));
 }
