@@ -26,8 +26,8 @@ namespace chef {
 		{
 			transition_table_.resize(num_states * num_symbols);
 
-			for (auto const [from, to, on] : edge_list) {
-				at(from, on).push_back(to);
+			for (auto const edge : edge_list) {
+				at(edge.from, edge.on).push_back(edge.to);
 			}
 		}
 

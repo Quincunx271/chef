@@ -4,6 +4,7 @@
 #include <concepts>
 #include <iosfwd>
 #include <iterator>
+#include <numeric>
 #include <string>
 #include <variant>
 #include <vector>
@@ -11,6 +12,7 @@
 #include <tl/tl.hpp>
 
 #include <chef/_/concepts.hpp>
+#include <chef/_/fwd.hpp>
 #include <chef/_/overload.hpp>
 #include <chef/_/value_ptr.hpp>
 
@@ -48,11 +50,11 @@ namespace chef {
 		re() = default; // Empty regular expression
 
 		explicit re(variant_type value)
-			: value(std::move(value))
+			: value(CHEF_MOVE(value))
 		{ }
 
 		explicit re(std::string lit)
-			: value(re_lit(std::move(lit)))
+			: value(re_lit(CHEF_MOVE(lit)))
 		{ }
 
 		friend re operator|(re lhs, re rhs)
@@ -62,28 +64,28 @@ namespace chef {
 					[](re_union lhs, re_union rhs) -> re {
 						lhs.pieces.insert(lhs.pieces.end(), std::move_iterator(rhs.pieces.begin()),
 							std::move_iterator(rhs.pieces.end()));
-						return re(std::move(lhs));
+						return re(CHEF_MOVE(lhs));
 					},
 					[](re_union lhs, detail::IsNot<re_empty> auto rhs) -> re {
-						lhs.pieces.emplace_back(std::make_unique<re>(std::move(rhs)));
-						return re(std::move(lhs));
+						lhs.pieces.emplace_back(std::make_unique<re>(CHEF_MOVE(rhs)));
+						return re(CHEF_MOVE(lhs));
 					},
 					[](detail::IsNot<re_empty> auto lhs, re_union rhs) -> re {
 						rhs.pieces.emplace(
-							rhs.pieces.begin(), std::make_unique<re>(std::move(lhs)));
-						return re(std::move(rhs));
+							rhs.pieces.begin(), std::make_unique<re>(CHEF_MOVE(lhs)));
+						return re(CHEF_MOVE(rhs));
 					},
 					[](detail::IsNot<re_empty> auto lhs, detail::IsNot<re_empty> auto rhs) -> re {
 						re_union result;
-						result.pieces.emplace_back(std::make_unique<re>(std::move(lhs)));
-						result.pieces.emplace_back(std::make_unique<re>(std::move(rhs)));
-						return re(std::move(result));
+						result.pieces.emplace_back(std::make_unique<re>(CHEF_MOVE(lhs)));
+						result.pieces.emplace_back(std::make_unique<re>(CHEF_MOVE(rhs)));
+						return re(CHEF_MOVE(result));
 					},
 					[](re_empty, re_empty) -> re { return re(re_empty{}); },
-					[](re_empty, auto rhs) -> re { return re(std::move(rhs)); },
-					[](auto lhs, re_empty) -> re { return re(std::move(lhs)); },
+					[](re_empty, auto rhs) -> re { return re(CHEF_MOVE(rhs)); },
+					[](auto lhs, re_empty) -> re { return re(CHEF_MOVE(lhs)); },
 				},
-				std::move(lhs.value), std::move(rhs.value));
+				CHEF_MOVE(lhs.value), CHEF_MOVE(rhs.value));
 
 			return result;
 		}
@@ -95,43 +97,43 @@ namespace chef {
 					[](re_cat lhs, re_cat rhs) -> re {
 						lhs.pieces.insert(lhs.pieces.end(), std::move_iterator(rhs.pieces.begin()),
 							std::move_iterator(rhs.pieces.end()));
-						return re(std::move(lhs));
+						return re(CHEF_MOVE(lhs));
 					},
 					[](re_cat lhs, detail::IsNot<re_empty> auto rhs) -> re {
 						if_not_epsilon(rhs,
-							[&] { lhs.pieces.emplace_back(std::make_unique<re>(std::move(rhs))); });
-						return re(std::move(lhs));
+							[&] { lhs.pieces.emplace_back(std::make_unique<re>(CHEF_MOVE(rhs))); });
+						return re(CHEF_MOVE(lhs));
 					},
 					[](detail::IsNot<re_empty> auto lhs, re_cat rhs) -> re {
 						if_not_epsilon(lhs, [&] {
 							rhs.pieces.emplace(
-								rhs.pieces.begin(), std::make_unique<re>(std::move(lhs)));
+								rhs.pieces.begin(), std::make_unique<re>(CHEF_MOVE(lhs)));
 						});
-						return re(std::move(rhs));
+						return re(CHEF_MOVE(rhs));
 					},
 					[](detail::IsNot<re_empty> auto lhs, detail::IsNot<re_empty> auto rhs) -> re {
 						re_cat result;
 						if_not_epsilon(lhs, [&] {
-							result.pieces.emplace_back(std::make_unique<re>(std::move(lhs)));
+							result.pieces.emplace_back(std::make_unique<re>(CHEF_MOVE(lhs)));
 						});
 						if_not_epsilon(rhs, [&] {
-							result.pieces.emplace_back(std::make_unique<re>(std::move(rhs)));
+							result.pieces.emplace_back(std::make_unique<re>(CHEF_MOVE(rhs)));
 						});
 						if (result.pieces.size() == 1) {
-							return re(std::move(*result.pieces.front()));
+							return re(CHEF_MOVE(*result.pieces.front()));
 						} else if (result.pieces.empty()) {
 							return re(re_lit(""));
 						}
-						return re(std::move(result));
+						return re(CHEF_MOVE(result));
 					},
 					[](re_lit lhs, re_lit rhs) -> re {
-						return re(re_lit{std::move(lhs.value) + std::move(rhs.value)});
+						return re(re_lit{CHEF_MOVE(lhs.value) + CHEF_MOVE(rhs.value)});
 					},
 					[](re_empty, auto&&) -> re { return re(re_empty{}); },
 					[](auto&&, re_empty) -> re { return re(re_empty{}); },
 					[](re_empty, re_empty) -> re { return re(re_empty{}); },
 				},
-				std::move(lhs.value), std::move(rhs.value));
+				CHEF_MOVE(lhs.value), CHEF_MOVE(rhs.value));
 		}
 
 		re operator*() const&
@@ -143,9 +145,9 @@ namespace chef {
 
 		re operator*() &&
 		{
-			if (std::holds_alternative<re_empty>(value)) return std::move(*this);
-			if (std::holds_alternative<re_star>(value)) return std::move(*this);
-			return re(re_star{chef::detail::value_ptr<re>(std::make_unique<re>(std::move(value)))});
+			if (std::holds_alternative<re_empty>(value)) return CHEF_MOVE(*this);
+			if (std::holds_alternative<re_star>(value)) return CHEF_MOVE(*this);
+			return re(re_star{chef::detail::value_ptr<re>(std::make_unique<re>(CHEF_MOVE(value)))});
 		}
 
 		// Whether the RE can be the empty string
@@ -174,6 +176,35 @@ namespace chef {
 		}
 
 		std::string to_string() const;
+
+		template <typename T, typename Acc>
+		T accumulate_chars(T init, Acc&& acc) const
+		{
+			return std::visit(detail::overload{
+								  [&](re_empty) { return CHEF_MOVE(init); },
+								  [&](re_star const& re) {
+									  return re.value->accumulate_chars(CHEF_MOVE(init), acc);
+								  },
+								  [&](re_lit const& lit) {
+									  return std::accumulate(
+										  lit.value.begin(), lit.value.end(), CHEF_MOVE(init), acc);
+								  },
+								  [&](re_cat const& cat) {
+									  return std::accumulate(cat.pieces.begin(), cat.pieces.end(),
+										  CHEF_MOVE(init), [&acc](T&& init, auto const& re_p) {
+											  return re_p->accumulate_chars(CHEF_MOVE(init), acc);
+										  });
+								  },
+								  [&](re_union const& alt) {
+									  return std::accumulate(alt.pieces.begin(), alt.pieces.end(),
+										  CHEF_MOVE(init), [&acc](T&& init, auto const& re_p) {
+											  return re_p->accumulate_chars(CHEF_MOVE(init), acc);
+										  });
+								  },
+								  [&](re_char_class) { return CHEF_MOVE(init); },
+							  },
+				value);
+		}
 
 	private:
 		std::ostream& print_to(std::ostream&) const;

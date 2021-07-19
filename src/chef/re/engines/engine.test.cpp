@@ -1,11 +1,17 @@
 #include <chef/re/engines/backtracking.hpp>
 #include <chef/re/engines/derivative.hpp>
+#include <chef/re/engines/dfa.hpp>
 
 #include <catch2/catch.hpp>
 
-#define ENGINES chef::re_derivative_engine
+namespace {
+	template <typename...>
+	struct type_list { };
+}
 
-TEMPLATE_TEST_CASE("Simple match", "", ENGINES)
+using engines = type_list<chef::re_derivative_engine, chef::re_dfa_engine>;
+
+TEMPLATE_LIST_TEST_CASE("Simple match", "", engines)
 {
 	using Engine = TestType;
 	chef::re const re
@@ -22,7 +28,7 @@ TEMPLATE_TEST_CASE("Simple match", "", ENGINES)
 	CHECK_FALSE(Engine::matches(re, "Doesn't match"));
 }
 
-TEMPLATE_TEST_CASE("More difficult match", "", ENGINES)
+TEMPLATE_LIST_TEST_CASE("More difficult match", "", engines)
 {
 	using Engine = TestType;
 	chef::re const re = (chef::re("ab") | chef::re("a")) << chef::re("baby");
@@ -35,7 +41,7 @@ TEMPLATE_TEST_CASE("More difficult match", "", ENGINES)
 // The issue (with cat too): if the initial state has incoming edges, there can be a problem.
 // This can only happen with a RE if we had a kleene star. Or maybe there is an issue at all if
 // the initial state is an accept state.
-TEMPLATE_TEST_CASE("Epsilon transitions", "", ENGINES)
+TEMPLATE_LIST_TEST_CASE("Epsilon transitions", "", engines)
 {
 	using Engine = TestType;
 	chef::re const re = *(chef::re("a") << *(chef::re("ab"))) | *chef::re("b");

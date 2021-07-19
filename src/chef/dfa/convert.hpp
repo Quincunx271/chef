@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <chef/_/fwd.hpp>
 #include <chef/dfa/dfa.hpp>
 #include <chef/dfa/nfa.hpp>
 
@@ -80,7 +81,7 @@ namespace chef {
 
 					actual_next = closure(actual_next);
 
-					auto const [it, inserted] = discovered_states.emplace(std::move(actual_next));
+					auto const [it, inserted] = discovered_states.emplace(CHEF_MOVE(actual_next));
 					if (inserted) {
 						processing_queue.push_back(&*it);
 						state_numbers.emplace(&*it, state_numbers.size());
@@ -122,7 +123,7 @@ namespace chef {
 
 		return std::pair{
 			chef::dfa(num_states, num_dfa_symbols, edges),
-			std::move(dfa_categories),
+			CHEF_MOVE(dfa_categories),
 		};
 	}
 }

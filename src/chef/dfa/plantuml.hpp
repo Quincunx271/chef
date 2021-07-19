@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 
+#include <chef/_/fwd.hpp>
 #include <chef/dfa/fa.hpp>
 
 namespace chef {
@@ -17,7 +18,7 @@ namespace chef {
 		explicit to_plantuml(
 			FA const& fa, std::unordered_map<chef::state_type, std::string> labels = {})
 			: fa{&fa}
-			, labels(std::move(labels))
+			, labels(CHEF_MOVE(labels))
 		{ }
 
 		friend auto operator<<(std::ostream& out, to_plantuml const& value) -> std::ostream&

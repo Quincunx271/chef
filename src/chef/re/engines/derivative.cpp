@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <numeric>
 
+#include <chef/_/fwd.hpp>
 #include <chef/_/overload.hpp>
 #include <chef/_/ranges.hpp>
 
@@ -17,8 +18,8 @@ namespace {
 		requires ranges::range<std::remove_cvref_t<Range>> //
 			chef::re concat_all(chef::re first, Range&& rest)
 		{
-			return std::accumulate(begin(rest), end(rest), std::move(first),
-				[](chef::re lhs, chef::re rhs) { return std::move(lhs) << std::move(rhs); });
+			return std::accumulate(begin(rest), end(rest), CHEF_MOVE(first),
+				[](chef::re lhs, chef::re rhs) { return CHEF_MOVE(lhs) << CHEF_MOVE(rhs); });
 		}
 }
 
@@ -35,7 +36,7 @@ namespace chef {
 				[c](chef::re_lit lit) -> re {
 					if (!lit.value.empty() && lit.value.front() == c) {
 						lit.value.erase(lit.value.begin());
-						return re(std::move(lit));
+						return re(CHEF_MOVE(lit));
 					} else {
 						return re();
 					}
@@ -58,7 +59,7 @@ namespace chef {
 					return res;
 				},
 				[c](re_star star) -> re {
-					return chef::derivative(*star.value, c) << re(std::move(star));
+					return chef::derivative(*star.value, c) << re(CHEF_MOVE(star));
 				},
 			},
 			re_in.value);

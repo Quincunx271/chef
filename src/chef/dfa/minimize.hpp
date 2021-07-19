@@ -11,6 +11,7 @@
 
 #include <tl/tl.hpp>
 
+#include <chef/_/fwd.hpp>
 #include <chef/_/ranges.hpp>
 #include <chef/_/set.hpp>
 #include <chef/dfa/dfa.hpp>
@@ -108,7 +109,7 @@ namespace chef {
 
 			while (!work_partitions.empty()) {
 				// Pop a partition from W
-				hashset<chef::state_type> A = std::move(*work_partitions.begin());
+				hashset<chef::state_type> A = CHEF_MOVE(*work_partitions.begin());
 				work_partitions.erase(work_partitions.begin());
 
 				for (chef::symbol_type const sym : dfa.symbols()) {
@@ -131,8 +132,8 @@ namespace chef {
 										intersect.size() <= diff.size() ? intersect : diff);
 								}
 
-								new_partitions.push_back(std::move(diff));
-								new_partitions.push_back(std::move(intersect));
+								new_partitions.push_back(CHEF_MOVE(diff));
+								new_partitions.push_back(CHEF_MOVE(intersect));
 								return true; // Erase this set
 							}
 						}
@@ -189,7 +190,7 @@ namespace chef {
 				}
 			}
 
-			return chef::dfa(num_states, old_dfa.num_symbols(), std::move(edges));
+			return chef::dfa(num_states, old_dfa.num_symbols(), CHEF_MOVE(edges));
 		}
 	}
 
@@ -222,6 +223,6 @@ namespace chef {
 				[&] TL(new_state_map[_1]));
 		}
 
-		return std::pair{std::move(new_dfa), std::move(new_categories)};
+		return std::pair{CHEF_MOVE(new_dfa), CHEF_MOVE(new_categories)};
 	}
 }

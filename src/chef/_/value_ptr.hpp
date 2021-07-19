@@ -6,6 +6,8 @@
 #include <tuple>
 #include <utility>
 
+#include <chef/_/fwd.hpp>
+
 namespace chef::detail {
 	template <typename T>
 	class value_ptr {
@@ -18,7 +20,7 @@ namespace chef::detail {
 		{ }
 
 		explicit value_ptr(std::unique_ptr<T> value)
-			: value(std::move(value))
+			: value(CHEF_MOVE(value))
 		{ }
 
 		value_ptr(value_ptr const& rhs)
@@ -26,7 +28,7 @@ namespace chef::detail {
 		{ }
 
 		value_ptr(value_ptr&& rhs) noexcept
-			: value(std::move(rhs.value))
+			: value(CHEF_MOVE(rhs.value))
 		{ }
 
 		value_ptr& operator=(value_ptr const& rhs)
@@ -37,7 +39,7 @@ namespace chef::detail {
 
 		value_ptr& operator=(value_ptr&& rhs) noexcept
 		{
-			value = std::move(rhs.value);
+			value = CHEF_MOVE(rhs.value);
 			return *this;
 		}
 

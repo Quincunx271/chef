@@ -10,6 +10,7 @@
 #include <tl/tl.hpp>
 
 #include <chef/_/concepts.hpp>
+#include <chef/_/fwd.hpp>
 #include <chef/_/overload.hpp>
 #include <chef/_/ranges.hpp>
 
@@ -157,9 +158,9 @@ namespace {
 
 	private:
 		explicit engine(chef::re const& re, engine_builder builder)
-			: next(std::move(builder.next))
-			, back(std::move(builder.back))
-			, accept(std::move(builder.accept))
+			: next(CHEF_MOVE(builder.next))
+			, back(CHEF_MOVE(builder.back))
+			, accept(CHEF_MOVE(builder.accept))
 			, re(&re)
 		{ }
 
