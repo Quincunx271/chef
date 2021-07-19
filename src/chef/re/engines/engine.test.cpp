@@ -30,3 +30,19 @@ TEMPLATE_TEST_CASE("More difficult match", "", ENGINES)
 	CHECK(Engine::matches(re, "ababy"));
 	CHECK(Engine::matches(re, "abbaby"));
 }
+
+// Test case that makes | require epsilon transitions. ((a(ab)*)*|b*)
+// The issue (with cat too): if the initial state has incoming edges, there can be a problem.
+// This can only happen with a RE if we had a kleene star. Or maybe there is an issue at all if
+// the initial state is an accept state.
+TEMPLATE_TEST_CASE("Epsilon transitions", "", ENGINES)
+{
+	using Engine = TestType;
+	chef::re const re = *(chef::re("a") << *(chef::re("ab"))) | *chef::re("b");
+
+	CHECK(Engine::matches(re, ""));
+	CHECK(Engine::matches(re, "a"));
+	CHECK(Engine::matches(re, "aab"));
+	// Not allowed to switch between options:
+	CHECK_FALSE(Engine::matches(re, "aabba"));
+}
