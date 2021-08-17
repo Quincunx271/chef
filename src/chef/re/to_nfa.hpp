@@ -179,7 +179,7 @@ namespace chef {
 							edge_list.push_back(fa_edge{
 								.from = index,
 								.to = index + 1,
-								.on = symbol_map.at(re.value[index]) + 1,
+								.on = chef::symbol_type(symbol_map.at(re.value[index]) + 1),
 							});
 						}
 
