@@ -2,7 +2,7 @@
 
 #include <ranges>
 
-#include "chef/matchers.test.hpp"
+#include "chef/matchers.test.inl"
 
 #include <catch2/catch.hpp>
 

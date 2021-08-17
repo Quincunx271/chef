@@ -3,7 +3,7 @@
 #include <ranges>
 #include <set>
 
-#include "chef/matchers.test.hpp"
+#include "chef/matchers.test.inl"
 
 #include <catch2/catch.hpp>
 
