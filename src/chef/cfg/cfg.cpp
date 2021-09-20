@@ -20,10 +20,10 @@ namespace chef {
 			std::move_iterator(rule.body.alts.end()));
 	}
 
-	std::map<cfg_var, std::set<cfg_token>> cfg::first_sets() const
+	std::map<cfg_var, std::set<cfg_token>> first_sets(const cfg& cfg)
 	{
 		std::map<cfg_var, std::set<cfg_token>> result;
-		for (auto&& var : vars())
+		for (auto&& var : cfg.vars())
 			result[var];
 
 		constexpr auto get = [](auto&& m, auto&& k) {
@@ -33,7 +33,7 @@ namespace chef {
 		};
 
 		auto const has_eps = overload{
-			[&](cfg_token const& token) -> bool { return is_vanishable(token); },
+			[&](cfg_token const& token) -> bool { return cfg.is_vanishable(token); },
 			[&](cfg_var const& var) -> bool {
 				return get(result, var)->second.contains(cfg_epsilon);
 			},
@@ -46,11 +46,11 @@ namespace chef {
 		do {
 			changed = false;
 
-			for (const cfg_var& var : vars()) {
+			for (const cfg_var& var : cfg.vars()) {
 				std::set<cfg_token>& first_set = result[var];
 				const std::size_t prev_size = first_set.size();
 
-				for (const cfg_seq& rule : rules(var)) {
+				for (const cfg_seq& rule : cfg.rules(var)) {
 					auto first_group_end = ranges::find_if_not(rule, has_eps_var);
 					if (first_group_end != rule.end()) ++first_group_end;
 
@@ -94,7 +94,7 @@ namespace chef {
 		return result;
 	}
 
-	std::map<cfg_var, std::set<cfg_token>> cfg::follow_sets() const
+	std::map<cfg_var, std::set<cfg_token>> follow_sets(const cfg&)
 	{
 		std::map<cfg_var, std::set<cfg_token>> result;
 

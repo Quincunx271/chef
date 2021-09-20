@@ -45,7 +45,7 @@ TEST_CASE("CFG works for simple grammar")
 
 	SECTION("First sets are computed properly")
 	{
-		std::map<chef::cfg_var, std::set<chef::cfg_token>> first_sets = cfg.first_sets();
+		std::map<chef::cfg_var, std::set<chef::cfg_token>> first_sets = chef::first_sets(cfg);
 		CHECK(
 			first_sets[chef::cfg_var("Start")] == std::set{chef::cfg_token(0), chef::cfg_token(1)});
 		CHECK(first_sets[chef::cfg_var("A")] == std::set{chef::cfg_token(0)});
@@ -84,7 +84,7 @@ TEST_CASE("First sets don't contain epsilon if the symbol cannot be fully erased
 		{chef::cfg_epsilon},
 	};
 
-	std::map<chef::cfg_var, std::set<chef::cfg_token>> first_sets = cfg.first_sets();
+	std::map<chef::cfg_var, std::set<chef::cfg_token>> first_sets = chef::first_sets(cfg);
 
 	CHECK_THAT(first_sets[chef::cfg_var("D")], FirstSetContains(chef::cfg_epsilon));
 	CHECK_THAT(first_sets[chef::cfg_var("C")], !FirstSetContains(chef::cfg_epsilon));

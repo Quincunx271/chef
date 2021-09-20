@@ -127,10 +127,11 @@ namespace chef {
 		// // Left & right factoring:
 		// vector<iterator> find_next_left_distributed(iterator = begin()) const;
 		// vector<iterator> find_next_right_distributed(iterator = begin()) const;
-
-		std::map<cfg_var, std::set<cfg_token>> first_sets() const;
-		std::map<cfg_var, std::set<cfg_token>> follow_sets() const;
 	};
+
+	std::map<cfg_var, std::set<cfg_token>> first_sets(const cfg&);
+
+	std::map<cfg_var, std::set<cfg_token>> follow_sets(const cfg&);
 
 	inline bool cfg::is_vanishable(cfg_token token) const
 	{
