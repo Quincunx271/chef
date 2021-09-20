@@ -22,81 +22,98 @@ namespace chef {
 			std::move_iterator(rule.body.alts.end()));
 	}
 
-	std::map<cfg_var, std::set<cfg_token>> first_sets(const cfg& cfg)
-	{
-		std::map<cfg_var, std::set<cfg_token>> result;
-		for (auto&& var : cfg.vars())
-			result[var];
+	namespace {
+		// Creates a group of sets for each variable in the CFG, repeatedly applying f until no more
+		// changes happen.
+		template <typename F>
+		std::map<cfg_var, std::set<cfg_token>> cfg_sets_steady_state(const cfg& cfg, const F& f)
+		{
+			std::map<cfg_var, std::set<cfg_token>> result;
+			for (auto&& var : cfg.vars())
+				result[var];
 
-		constexpr auto get = [](auto&& m, auto&& k) {
-			auto it = m.find(k);
-			assert(it != m.end());
-			return it;
-		};
+			bool changed = false;
 
-		auto const has_eps = overload{
-			[&](cfg_token const& token) -> bool { return token == cfg_epsilon; },
-			[&](cfg_var const& var) -> bool {
-				return get(result, var)->second.contains(cfg_epsilon);
-			},
-		};
-		auto const has_eps_var
-			= [&](cfg_seq::value_type const& var) { return std::visit(has_eps, var); };
+			do {
+				changed = false;
 
-		bool changed = false;
+				for (const cfg_var& var : cfg.vars()) {
+					std::set<cfg_token>& set = result.find(var)->second;
+					const std::size_t prev_size = set.size();
 
-		do {
-			changed = false;
-
-			for (const cfg_var& var : cfg.vars()) {
-				std::set<cfg_token>& first_set = result.find(var)->second;
-				const std::size_t prev_size = first_set.size();
-
-				for (const cfg_seq& rule : cfg.rules(var)) {
-					auto first_group_end = ranges::find_if_not(rule, has_eps_var);
-					if (first_group_end != rule.end()) ++first_group_end;
-
-					ForwardRangeOf<const std::variant<cfg_var, cfg_token>&> auto first_group
-						= ranges::subrange(rule.begin(), first_group_end);
-
-					for (const auto& part : first_group) {
-						std::visit(overload{
-									   [&](const cfg_token& token) {
-										   if (token != cfg_epsilon) first_set.insert(token);
-									   },
-									   [&](const cfg_var& var) {
-										   const std::set<cfg_token>& var_firsts
-											   = result.find(var)->second;
-
-										   auto var_firsts_without_eps = views::all(var_firsts)
-											   | views::filter([] TL(_1 != cfg_epsilon));
-
-										   first_set.insert(var_firsts_without_eps.begin(),
-											   var_firsts_without_eps.end());
-
-										   first_set.size();
-									   },
-								   },
-							part);
+					for (const cfg_seq& rule : cfg.rules(var)) {
+						f(result, var, rule, set);
 					}
 
-					if (first_group.end() == rule.end()
-						&& has_eps_var(*std::prev(first_group.end()))) {
-						first_set.insert(cfg_epsilon);
+					if (prev_size != set.size()) {
+						changed |= true;
 					}
 				}
 
-				if (prev_size != first_set.size()) {
-					changed |= true;
-				}
-			}
+			} while (changed);
 
-		} while (changed);
+			return result;
+		}
 
-		return result;
+		// Given a results CFG sets (e.g. first sets), gives back a function operating on a
+		// cfg_seq::value_type which asks whether epsilon is a valid expansion for the item.
+		constexpr auto cfg_has_eps_var_f
+			= [](const std::map<cfg_var, std::set<cfg_token>>& result) {
+				  return [&result](cfg_seq::value_type const& var) {
+					  return std::visit(
+						  overload{
+							  [](cfg_token const& token) -> bool { return token == cfg_epsilon; },
+							  [&result](cfg_var const& var) -> bool {
+								  return result.find(var)->second.contains(cfg_epsilon);
+							  },
+						  },
+						  var);
+				  };
+			  };
 	}
 
-	std::map<cfg_var, std::set<cfg_token>> follow_sets(const cfg&)
+	std::map<cfg_var, std::set<cfg_token>> first_sets(const cfg& cfg)
+	{
+		return cfg_sets_steady_state(cfg,
+			[&cfg](const std::map<cfg_var, std::set<cfg_token>>& result, const cfg_var&,
+				const cfg_seq& rule, std::set<cfg_token>& first_set) {
+				const auto has_eps_var = cfg_has_eps_var_f(result);
+
+				auto first_group_end = ranges::find_if_not(rule, has_eps_var);
+				if (first_group_end != rule.end()) ++first_group_end;
+
+				ForwardRangeOf<const std::variant<cfg_var, cfg_token>&> auto first_group
+					= ranges::subrange(rule.begin(), first_group_end);
+
+				for (const auto& part : first_group) {
+					std::visit(overload{
+								   [&](const cfg_token& token) {
+									   if (token != cfg_epsilon) first_set.insert(token);
+								   },
+								   [&](const cfg_var& var) {
+									   const std::set<cfg_token>& var_firsts
+										   = result.find(var)->second;
+
+									   auto var_firsts_without_eps = views::all(var_firsts)
+										   | views::filter([] TL(_1 != cfg_epsilon));
+
+									   first_set.insert(var_firsts_without_eps.begin(),
+										   var_firsts_without_eps.end());
+
+									   first_set.size();
+								   },
+							   },
+						part);
+				}
+
+				if (first_group.end() == rule.end() && has_eps_var(*std::prev(first_group.end()))) {
+					first_set.insert(cfg_epsilon);
+				}
+			});
+	}
+
+	std::map<cfg_var, std::set<cfg_token>> follow_sets(
+		const cfg&, const std::map<cfg_var, std::set<cfg_token>>&)
 	{
 		std::map<cfg_var, std::set<cfg_token>> result;
 
