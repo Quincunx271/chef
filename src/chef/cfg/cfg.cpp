@@ -47,34 +47,48 @@ namespace chef {
 			changed = false;
 
 			for (const cfg_var& var : vars()) {
+				std::set<cfg_token>& first_set = result[var];
+				const std::size_t prev_size = first_set.size();
+
 				for (const cfg_seq& rule : rules(var)) {
 					auto first_group_end = ranges::find_if_not(rule, has_eps_var);
 					if (first_group_end != rule.end()) ++first_group_end;
 
 					ForwardRangeOf<const std::variant<cfg_var, cfg_token>&> auto first_group
 						= ranges::subrange(rule.begin(), first_group_end);
-					std::set<cfg_token>& first_set = result[var];
 
 					for (const auto& part : first_group) {
-						changed |= std::visit(
-							overload{
-								[&](const cfg_token& token) -> bool {
-									return first_set.insert(token).second;
-								},
-								[&](const cfg_var& var) -> bool {
-									const std::set<cfg_token>& var_firsts
-										= result.find(var)->second;
+						std::visit(overload{
+									   [&](const cfg_token& token) {
+										   if (token != cfg_epsilon) first_set.insert(token);
+									   },
+									   [&](const cfg_var& var) {
+										   const std::set<cfg_token>& var_firsts
+											   = result.find(var)->second;
 
-									const std::size_t prev_size = first_set.size();
-									first_set.insert(var_firsts.begin(), var_firsts.end());
+										   auto var_firsts_without_eps = views::all(var_firsts)
+											   | views::filter([] TL(_1 != cfg_epsilon));
 
-									return first_set.size() != prev_size;
-								},
-							},
+										   first_set.insert(var_firsts_without_eps.begin(),
+											   var_firsts_without_eps.end());
+
+										   first_set.size();
+									   },
+								   },
 							part);
 					}
+
+					if (first_group.end() == rule.end()
+						&& has_eps_var(*std::prev(first_group.end()))) {
+						first_set.insert(cfg_epsilon);
+					}
+				}
+
+				if (prev_size != first_set.size()) {
+					changed |= true;
 				}
 			}
+
 		} while (changed);
 
 		return result;
