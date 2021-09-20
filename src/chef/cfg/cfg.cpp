@@ -5,6 +5,8 @@
 #include <ostream>
 #include <ranges>
 
+#include <tl/tl.hpp>
+
 #include <chef/_/overload.hpp>
 
 namespace ranges = std::ranges;
@@ -33,7 +35,7 @@ namespace chef {
 		};
 
 		auto const has_eps = overload{
-			[&](cfg_token const& token) -> bool { return cfg.is_vanishable(token); },
+			[&](cfg_token const& token) -> bool { return token == cfg_epsilon; },
 			[&](cfg_var const& var) -> bool {
 				return get(result, var)->second.contains(cfg_epsilon);
 			},
@@ -47,7 +49,7 @@ namespace chef {
 			changed = false;
 
 			for (const cfg_var& var : cfg.vars()) {
-				std::set<cfg_token>& first_set = result[var];
+				std::set<cfg_token>& first_set = result.find(var)->second;
 				const std::size_t prev_size = first_set.size();
 
 				for (const cfg_seq& rule : cfg.rules(var)) {

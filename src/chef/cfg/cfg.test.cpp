@@ -33,15 +33,7 @@ TEST_CASE("CFG works for simple grammar")
 					{{chef::cfg_token(0), chef::cfg_var("C")}},
 				}}},
 		},
-		{chef::cfg_epsilon},
 	};
-
-	SECTION("Tokens are appropriately vanishable")
-	{
-		CHECK(cfg.is_vanishable(chef::cfg_epsilon));
-		CHECK_FALSE(cfg.is_vanishable(chef::cfg_token(0)));
-		CHECK_FALSE(cfg.is_vanishable(chef::cfg_token(1)));
-	}
 
 	SECTION("First sets are computed properly")
 	{
@@ -81,7 +73,6 @@ TEST_CASE("First sets don't contain epsilon if the symbol cannot be fully erased
 					{{chef::cfg_epsilon}},
 				}}},
 		},
-		{chef::cfg_epsilon},
 	};
 
 	std::map<chef::cfg_var, std::set<chef::cfg_token>> first_sets = chef::first_sets(cfg);

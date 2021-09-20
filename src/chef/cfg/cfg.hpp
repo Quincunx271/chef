@@ -99,14 +99,12 @@ namespace chef {
 	class cfg {
 	private:
 		std::map<cfg_var, cfg_rule_body> rules_;
-		std::set<cfg_token> vanishable_tokens_;
 
 	public:
 		cfg() = default;
 
 		template <std::size_t N>
-		explicit cfg(cfg_rule(&&rules)[N], std::set<cfg_token> vanishable_tokens = {})
-			: vanishable_tokens_(CHEF_MOVE(vanishable_tokens))
+		explicit cfg(cfg_rule(&&rules)[N])
 		{
 			for (std::size_t i = 0; i < N; ++i) {
 				add_rule(std::move(rules[i]));
@@ -114,8 +112,6 @@ namespace chef {
 		}
 
 		void add_rule(cfg_rule rule);
-
-		bool is_vanishable(cfg_token) const;
 
 		ForwardRangeOf<const cfg_var&> auto vars() const;
 
@@ -132,11 +128,6 @@ namespace chef {
 	std::map<cfg_var, std::set<cfg_token>> first_sets(const cfg&);
 
 	std::map<cfg_var, std::set<cfg_token>> follow_sets(const cfg&);
-
-	inline bool cfg::is_vanishable(cfg_token token) const
-	{
-		return vanishable_tokens_.contains(token);
-	}
 
 	inline ForwardRangeOf<const cfg_var&> auto cfg::vars() const
 	{
