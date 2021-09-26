@@ -54,7 +54,20 @@ namespace chef {
 		}
 	};
 
+	inline namespace literals {
+		inline cfg_var operator""_var(const char* str, std::size_t len)
+		{
+			return cfg_var(std::string(str, len));
+		}
+
+		inline cfg_token operator""_tok(unsigned long long value)
+		{
+			return cfg_token((int)value);
+		}
+	}
+
 	constexpr cfg_token cfg_epsilon{-1};
+	constexpr cfg_token cfg_eof{-2};
 
 	// A straight sequence of variables or tokens, forms the parts of an alternative
 	struct cfg_seq {
@@ -98,13 +111,17 @@ namespace chef {
 
 	class cfg {
 	private:
+		cfg_var start_;
 		std::map<cfg_var, cfg_rule_body> rules_;
 
 	public:
-		cfg() = default;
+		explicit cfg(cfg_var start)
+			: start_(CHEF_MOVE(start))
+		{ }
 
 		template <std::size_t N>
-		explicit cfg(cfg_rule(&&rules)[N])
+		explicit cfg(cfg_var start, cfg_rule(&&rules)[N])
+			: cfg(CHEF_MOVE(start))
 		{
 			for (std::size_t i = 0; i < N; ++i) {
 				add_rule(std::move(rules[i]));
@@ -112,6 +129,11 @@ namespace chef {
 		}
 
 		void add_rule(cfg_rule rule);
+
+		const cfg_var& start_var() const
+		{
+			return start_;
+		}
 
 		ForwardRangeOf<const cfg_var&> auto vars() const;
 
