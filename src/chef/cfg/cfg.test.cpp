@@ -5,10 +5,15 @@
 
 using FirstSetContains = Contains<std::set<chef::cfg_token>>;
 
+using namespace chef::literals;
+
 TEST_CASE("CFG works for simple grammar")
 {
 	// Sample CFG comes from https://youtu.be/vrWr_5Yk1OA?t=2187
+	// 0 == b
+	// 1 == a
 	chef::cfg cfg{
+		chef::cfg_var("Start"),
 		{
 			{chef::cfg_var("Start"),
 				{{
@@ -45,11 +50,23 @@ TEST_CASE("CFG works for simple grammar")
 		CHECK(first_sets[chef::cfg_var("C")] == std::set{chef::cfg_token(0), chef::cfg_epsilon});
 		CHECK(first_sets[chef::cfg_var("D")] == std::set{chef::cfg_token(0), chef::cfg_token(1)});
 	}
+	SECTION("Follow sets are computed properly")
+	{
+		const std::map<chef::cfg_var, std::set<chef::cfg_token>> first_sets = chef::first_sets(cfg);
+		std::map<chef::cfg_var, std::set<chef::cfg_token>> follow_sets
+			= chef::follow_sets(cfg, first_sets);
+		CHECK(follow_sets["Start"_var] == std::set{chef::cfg_eof});
+		CHECK(follow_sets["A"_var] == std::set{chef::cfg_eof, 0_tok, 1_tok});
+		CHECK(follow_sets["B"_var] == std::set{chef::cfg_eof, 0_tok});
+		CHECK(follow_sets["C"_var] == std::set{0_tok});
+		CHECK(follow_sets["D"_var] == std::set{0_tok});
+	}
 }
 
 TEST_CASE("First sets don't contain epsilon if the symbol cannot be fully erased")
 {
 	chef::cfg cfg{
+		chef::cfg_var("S"),
 		{
 			{chef::cfg_var("S"),
 				{{
