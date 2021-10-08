@@ -13,29 +13,28 @@ TEST_CASE("CFG works for simple grammar")
 	// 0 == b
 	// 1 == a
 	chef::cfg cfg{
-		chef::cfg_var("Start"),
+		"Start"_var,
 		{
-			{chef::cfg_var("Start"),
+			{"Start"_var,
 				{{
-					{{chef::cfg_var("A")}},
-					{{chef::cfg_var("B")}},
+					{{"A"_var}},
+					{{"B"_var}},
 				}}},
-			{chef::cfg_var("A"), {{{{chef::cfg_token(0)}}}}},
-			{chef::cfg_var("B"),
+			{"A"_var, {{{{0_tok}}}}},
+			{"B"_var,
 				{{
-					{{chef::cfg_var("B"), chef::cfg_var("A"), chef::cfg_var("C"),
-						chef::cfg_token(0)}},
-					{{chef::cfg_token(1)}},
+					{{"B"_var, "A"_var, "C"_var, 0_tok}},
+					{{1_tok}},
 				}}},
-			{chef::cfg_var("C"),
+			{"C"_var,
 				{{
-					{{chef::cfg_var("A"), chef::cfg_var("D")}},
+					{{"A"_var, "D"_var}},
 					{{chef::cfg_epsilon}},
 				}}},
-			{chef::cfg_var("D"),
+			{"D"_var,
 				{{
-					{{chef::cfg_var("B"), chef::cfg_var("C")}},
-					{{chef::cfg_token(0), chef::cfg_var("C")}},
+					{{"B"_var, "C"_var}},
+					{{0_tok, "C"_var}},
 				}}},
 		},
 	};
@@ -43,12 +42,11 @@ TEST_CASE("CFG works for simple grammar")
 	SECTION("First sets are computed properly")
 	{
 		std::map<chef::cfg_var, std::set<chef::cfg_token>> first_sets = chef::first_sets(cfg);
-		CHECK(
-			first_sets[chef::cfg_var("Start")] == std::set{chef::cfg_token(0), chef::cfg_token(1)});
-		CHECK(first_sets[chef::cfg_var("A")] == std::set{chef::cfg_token(0)});
-		CHECK(first_sets[chef::cfg_var("B")] == std::set{chef::cfg_token(1)});
-		CHECK(first_sets[chef::cfg_var("C")] == std::set{chef::cfg_token(0), chef::cfg_epsilon});
-		CHECK(first_sets[chef::cfg_var("D")] == std::set{chef::cfg_token(0), chef::cfg_token(1)});
+		CHECK(first_sets["Start"_var] == std::set{0_tok, 1_tok});
+		CHECK(first_sets["A"_var] == std::set{0_tok});
+		CHECK(first_sets["B"_var] == std::set{1_tok});
+		CHECK(first_sets["C"_var] == std::set{0_tok, chef::cfg_epsilon});
+		CHECK(first_sets["D"_var] == std::set{0_tok, 1_tok});
 	}
 	SECTION("Follow sets are computed properly")
 	{
@@ -66,26 +64,26 @@ TEST_CASE("CFG works for simple grammar")
 TEST_CASE("First sets don't contain epsilon if the symbol cannot be fully erased")
 {
 	chef::cfg cfg{
-		chef::cfg_var("S"),
+		"S"_var,
 		{
-			{chef::cfg_var("S"),
+			{"S"_var,
 				{{
-					{{chef::cfg_var("A"), chef::cfg_var("B")}},
+					{{"A"_var, "B"_var}},
 				}}},
-			{chef::cfg_var("A"),
+			{"A"_var,
 				{{
-					{{chef::cfg_var("C")}},
+					{{"C"_var}},
 					{{chef::cfg_epsilon}},
 				}}},
-			{chef::cfg_var("B"),
+			{"B"_var,
 				{{
-					{{chef::cfg_token(0)}},
+					{{0_tok}},
 				}}},
-			{chef::cfg_var("C"),
+			{"C"_var,
 				{{
-					{{chef::cfg_var("D"), chef::cfg_token(0)}},
+					{{"D"_var, 0_tok}},
 				}}},
-			{chef::cfg_var("D"),
+			{"D"_var,
 				{{
 					{{chef::cfg_epsilon}},
 				}}},
@@ -94,7 +92,7 @@ TEST_CASE("First sets don't contain epsilon if the symbol cannot be fully erased
 
 	std::map<chef::cfg_var, std::set<chef::cfg_token>> first_sets = chef::first_sets(cfg);
 
-	CHECK_THAT(first_sets[chef::cfg_var("D")], FirstSetContains(chef::cfg_epsilon));
-	CHECK_THAT(first_sets[chef::cfg_var("C")], !FirstSetContains(chef::cfg_epsilon));
-	CHECK_THAT(first_sets[chef::cfg_var("S")], !FirstSetContains(chef::cfg_epsilon));
+	CHECK_THAT(first_sets["D"_var], FirstSetContains(chef::cfg_epsilon));
+	CHECK_THAT(first_sets["C"_var], !FirstSetContains(chef::cfg_epsilon));
+	CHECK_THAT(first_sets["S"_var], !FirstSetContains(chef::cfg_epsilon));
 }
