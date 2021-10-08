@@ -138,13 +138,6 @@ namespace chef {
 		ForwardRangeOf<const cfg_var&> auto vars() const;
 
 		ForwardRangeOf<const cfg_seq&> auto rules(cfg_var const&) const;
-
-		// // Left & right recursion elimination:
-		// iterator find_next_left_recursive_rule(iterator = begin()) const;
-		// iterator find_next_right_recursive_rule(iterator = begin()) const;
-		// // Left & right factoring:
-		// vector<iterator> find_next_left_distributed(iterator = begin()) const;
-		// vector<iterator> find_next_right_distributed(iterator = begin()) const;
 	};
 
 	std::map<cfg_var, std::set<cfg_token>> first_sets(const cfg&);
