@@ -66,8 +66,8 @@ namespace chef {
 		}
 	}
 
-	constexpr cfg_token cfg_epsilon{-1};
-	constexpr cfg_token cfg_eof{-2};
+	inline constexpr cfg_token cfg_epsilon{-1};
+	inline constexpr cfg_token cfg_eof{-2};
 
 	// A straight sequence of variables or tokens, forms the parts of an alternative
 	struct cfg_seq {
