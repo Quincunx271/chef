@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <chef/cfg/cfg.hpp>
+#include <chef/util/ranges.hpp>
 
 // The LL(1) parsing state consists of:
 // 1. The stream of tokens (allowing us to read one without consuming it).
@@ -40,7 +41,7 @@ namespace chef {
 		{ }
 
 		template <detail::InsertableContainer<cfg_seq::value_type> Container>
-		void expand_variable(
+		bool expand_variable(
 			Container& container, const cfg_var& cur, const cfg_token& next_token) const
 		{
 			if (const auto var_map_it = table_.find(cur); var_map_it != table_.end()) {
@@ -48,9 +49,51 @@ namespace chef {
 					tok_map_it != var_map_it->second.end())
 				{
 					container.insert(
-						container.end(), tok_map_it->second.begin(), tok_map_it->second.end());
+						container.end(), tok_map_it->second.rbegin(), tok_map_it->second.rend());
+					// `next_token` is set in the table.
+					return true;
+				} else {
+					// Parsing failed; `next_token` is not set.
+					return false;
 				}
 			}
+			assert(false && "Every variable must be accounted for in the table.");
+		}
+
+		template <InputRangeOf<const cfg_token&> TokenStream>
+		bool parse(cfg_var start, TokenStream&& tokens) const
+		{
+			using std::ranges::begin;
+			using std::ranges::end;
+
+			std::vector<cfg_seq::value_type> stack;
+			stack.push_back(std::move(start));
+
+			for (auto first = begin(tokens); first != end(tokens);) {
+				if (stack.empty()) {
+					// An empty stack only matches the empty string, but we have at least one more
+					// token to process.
+					return false;
+				}
+				cfg_seq::value_type cur = std::move(stack.back());
+				stack.pop_back();
+
+				// Either forms a reference or performs temporary lifetime extension if the
+				// operator*() actually returns an rvalue.
+				const cfg_token& next = *first;
+
+				if (std::holds_alternative<cfg_token>(cur)) {
+					// Raw tokens must match exactly.
+					if (std::get<cfg_token>(cur) != next) return false;
+					++first;
+				} else {
+					// Variables are expanded according to the next token, and we do not pop from
+					// the input sequence.
+					expand_variable(stack, std::get<cfg_var>(cur), next);
+				}
+			}
+
+			return stack.empty();
 		}
 	};
 }
