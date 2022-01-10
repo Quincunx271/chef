@@ -87,6 +87,16 @@ namespace chef {
 			return value.end();
 		}
 
+		auto rbegin() const
+		{
+			return value.rbegin();
+		}
+
+		auto rend() const
+		{
+			return value.rend();
+		}
+
 		friend std::ostream& operator<<(std::ostream& out, chef::cfg_seq const& seq)
 		{
 			return detail::print_to(out, seq);
