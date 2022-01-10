@@ -2,8 +2,10 @@
 
 #include <cassert>
 #include <compare>
+#include <concepts>
 #include <iosfwd>
 #include <map>
+#include <ranges>
 #include <set>
 #include <span>
 #include <string>
@@ -156,4 +158,14 @@ namespace chef {
 		assert(it != rules_.end());
 		return std::span(std::as_const(it->second.alts));
 	}
+
+	// Just for fun. No idea if this will be useful at some point.
+	template <typename Engine>
+	concept CFGEngine = std::constructible_from<Engine, const cfg&> && requires(const Engine engine)
+	{
+		{
+			engine.parse(
+				cfg_var("Start"), std::declval<std::ranges::istream_view<cfg_token>>())
+			} -> std::convertible_to<bool>;
+	};
 }
