@@ -42,6 +42,19 @@ namespace chef {
 
 		explicit ll1_table(const cfg& grammar);
 
+		// Expand the (variable, token) sequence into the provided container.
+		//
+		// Note that the expanded cfg_seq will be in reverse order, like a stack.
+		//
+		// Parameters:
+		//  - container: a container with an .insert() function to expand the variable into.
+		//  - cur: the cfg_var to expand.
+		//  - next_token: which token to expand the cfg_var for.
+		//
+		// Returns:
+		//  - whether the variable could be expanded. If this returns false,
+		//    then this variable cannot be expanded with this token, meaning that
+		//    parsing should fail.
 		template <detail::InsertableContainer<cfg_seq::value_type> Container>
 		bool expand_variable(
 			Container& container, const cfg_var& cur, const cfg_token& next_token) const
