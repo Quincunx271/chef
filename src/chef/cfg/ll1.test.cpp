@@ -5,6 +5,7 @@
 #include <ranges>
 #include <sstream>
 #include <stack>
+#include <utility>
 #include <vector>
 
 #include <tl/tl.hpp>
@@ -19,6 +20,8 @@ using chef::ll1_table;
 
 namespace views = std::ranges::views;
 
+using namespace chef::literals;
+
 TEST_CASE("ll1_table::expand_variable accepts types it should")
 {
 	const ll1_table table({});
@@ -26,19 +29,19 @@ TEST_CASE("ll1_table::expand_variable accepts types it should")
 	SECTION("vector is allowed")
 	{
 		std::vector<cfg_seq::value_type> vector;
-		STATIC_REQUIRE(requires { table.expand_variable(vector, cfg_var(""), cfg_epsilon); });
+		STATIC_REQUIRE(requires { table.expand_variable(vector, ""_var, cfg_epsilon); });
 	}
 }
 
 TEST_CASE("ll1_table::expand_variable works")
 {
-	const cfg_seq seq({cfg_token(1), cfg_var("B"), cfg_token(2)});
+	const cfg_seq seq({1_tok, "B"_var, 2_tok});
 	const ll1_table table({
-		{cfg_var("A"), {{cfg_token(0), seq}}},
+		{"A"_var, {{0_tok, seq}}},
 	});
 
 	std::vector<cfg_seq::value_type> stack;
-	table.expand_variable(stack, cfg_var("A"), cfg_token(0));
+	table.expand_variable(stack, "A"_var, 0_tok);
 	std::ranges::reverse(stack);
 	CHECK(cfg_seq(stack) == seq);
 }
@@ -54,43 +57,54 @@ TEST_CASE("ll1_table::parse works")
 	// 3: +
 	const ll1_table table({
 		{
-			cfg_var("S"),
+			"S"_var,
 			{
-				{cfg_token(0), cfg_seq({cfg_var("F")})},
-				{cfg_token(1),
-					cfg_seq(
-						{cfg_token(1), cfg_var("S"), cfg_token(3), cfg_var("F"), cfg_token(2)})},
+				{0_tok, cfg_seq({"F"_var})},
+				{1_tok, cfg_seq({1_tok, "S"_var, 3_tok, "F"_var, 2_tok})},
 			},
 		},
-		{cfg_var("F"), {{cfg_token(0), cfg_seq({cfg_token(0)})}}},
+		{"F"_var, {{0_tok, cfg_seq({0_tok})}}},
 	});
+
+	SECTION("accepts the types it should")
+	{
+		SECTION("accepts input ranges")
+		{
+			std::istringstream iss;
+			auto input
+				= std::ranges::istream_view<int>(iss) | views::transform([] TL(cfg_token(_1)));
+
+			STATIC_REQUIRE(requires { table.parse("S"_var, input); });
+		}
+		SECTION("accepts std::vector<cfg_token>")
+		{
+			std::vector<cfg_token> input;
+
+			STATIC_REQUIRE(requires { table.parse("S"_var, input); });
+			STATIC_REQUIRE(requires { table.parse("S"_var, std::as_const(input)); });
+		}
+	}
 
 	SECTION("parses valid input")
 	{
 		// Input: (a + a); from same example as the grammar.
+		const std::vector<cfg_token> input{1_tok, 0_tok, 3_tok, 0_tok, 2_tok};
 
-		// To produce a std::input_range, use istringstream + view::istream().
-		std::istringstream iss("1 0 3 0 2");
-		auto input = std::ranges::istream_view<int>(iss) | views::transform([] TL(cfg_token(_1)));
-
-		CHECK(table.parse(cfg_var("S"), input));
+		CHECK(table.parse("S"_var, input));
 	}
 	SECTION("rejects invalid input")
 	{
-		// Input: (a + a); from same example as the grammar.
+		// Input: (a + a; from same example as the grammar.
 
 		// To produce a std::input_range, use istringstream + view::istream().
-		std::istringstream iss("1 0 3 0");
-		auto input = std::ranges::istream_view<int>(iss) | views::transform([] TL(cfg_token(_1)));
+		const std::vector<cfg_token> input{1_tok, 0_tok, 3_tok, 0_tok};
 
-		CHECK_FALSE(table.parse(cfg_var("S"), input));
+		CHECK_FALSE(table.parse("S"_var, input));
 	}
 }
 
 TEST_CASE("ll1_table from CFG works")
 {
-	using namespace chef::literals;
-
 	SECTION("tiny CFG")
 	{
 		const chef::cfg tiny{
