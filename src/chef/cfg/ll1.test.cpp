@@ -86,3 +86,24 @@ TEST_CASE("ll1_table::parse works")
 		CHECK_FALSE(table.parse(cfg_var("S"), input));
 	}
 }
+
+TEST_CASE("ll1_table from CFG works")
+{
+	using namespace chef::literals;
+
+	SECTION("tiny CFG")
+	{
+		const chef::cfg tiny{
+			"Start"_var,
+			{
+				{"Start"_var, {{{{0_tok}}}}},
+			},
+		};
+
+		const ll1_table ll1(tiny);
+		CHECK(ll1.parse("Start"_var, std::vector<cfg_token>{0_tok}));
+		CHECK_FALSE(ll1.parse("Start"_var, std::vector<cfg_token>{1_tok}));
+		CHECK_FALSE(ll1.parse("Start"_var, std::vector<cfg_token>{0_tok, 1_tok}));
+		CHECK_FALSE(ll1.parse("Start"_var, std::vector<cfg_token>{}));
+	}
+}

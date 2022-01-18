@@ -59,6 +59,30 @@ TEST_CASE("CFG works for simple grammar")
 		CHECK(follow_sets["C"_var] == std::set{0_tok});
 		CHECK(follow_sets["D"_var] == std::set{0_tok});
 	}
+	SECTION("First+ sets are computed properly")
+	{
+		const auto first_sets = chef::first_sets(cfg);
+		const auto follow_sets = chef::follow_sets(cfg, first_sets);
+
+		CHECK(first_plus_set("Start"_var, {{"A"_var}}, first_sets, follow_sets) == std::set{0_tok});
+		CHECK(first_plus_set("Start"_var, {{"B"_var}}, first_sets, follow_sets) == std::set{1_tok});
+
+		CHECK(first_plus_set("A"_var, {{0_tok}}, first_sets, follow_sets) == std::set{0_tok});
+
+		CHECK(first_plus_set("B"_var, {{"B"_var, "A"_var, "C"_var, 0_tok}}, first_sets, follow_sets)
+			== std::set{1_tok});
+		CHECK(first_plus_set("B"_var, {{1_tok}}, first_sets, follow_sets) == std::set{1_tok});
+
+		CHECK(first_plus_set("C"_var, {{"A"_var, "D"_var}}, first_sets, follow_sets)
+			== std::set{0_tok});
+		CHECK(first_plus_set("C"_var, {{chef::cfg_epsilon}}, first_sets, follow_sets)
+			== follow_sets.at("C"_var));
+
+		CHECK(first_plus_set("D"_var, {{"B"_var, "C"_var}}, first_sets, follow_sets)
+			== std::set{1_tok});
+		CHECK(first_plus_set("D"_var, {{0_tok, "C"_var}}, first_sets, follow_sets)
+			== std::set{0_tok});
+	}
 }
 
 TEST_CASE("First sets don't contain epsilon if the symbol cannot be fully erased")
