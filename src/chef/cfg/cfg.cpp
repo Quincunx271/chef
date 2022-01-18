@@ -188,6 +188,7 @@ namespace chef {
 		for (const auto& item : rule) {
 			const bool erasable = std::visit(detail::overload{
 												 [&](cfg_token tok) {
+													 if (tok == cfg_epsilon) return true;
 													 result.insert(tok);
 													 return false;
 												 },
