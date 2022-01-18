@@ -2,9 +2,10 @@
 
 #include <map>
 #include <set>
-#include <stdexcept>
+#include <string>
 
 #include <chef/cfg/cfg.hpp>
+#include <chef/errors.hpp>
 
 namespace chef {
 	namespace {
@@ -21,7 +22,12 @@ namespace chef {
 					for (const cfg_token& token :
 						chef::first_plus_set(var, rule, first_sets, follow_sets)) {
 						if (!result[var].emplace(token, rule).second) {
-							throw std::invalid_argument("Grammar is not LL(1)!");
+							throw chef::construction_error(
+								"Grammar is not LL(1); it is not left factored! Variable `"
+								+ var.value
+								+ "` has multiple possible rules which could be taken given the "
+								  "token: "
+								+ std::to_string(token.token_type));
 						}
 					}
 				}

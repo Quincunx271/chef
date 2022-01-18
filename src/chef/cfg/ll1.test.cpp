@@ -10,6 +10,8 @@
 
 #include <tl/tl.hpp>
 
+#include <chef/errors.hpp>
+
 #include <catch2/catch.hpp>
 
 using chef::cfg_epsilon;
@@ -17,6 +19,8 @@ using chef::cfg_seq;
 using chef::cfg_token;
 using chef::cfg_var;
 using chef::ll1_table;
+
+using Catch::Matchers::Contains;
 
 namespace views = std::ranges::views;
 
@@ -119,5 +123,37 @@ TEST_CASE("ll1_table from CFG works")
 		CHECK_FALSE(ll1.parse("Start"_var, std::vector<cfg_token>{1_tok}));
 		CHECK_FALSE(ll1.parse("Start"_var, std::vector<cfg_token>{0_tok, 1_tok}));
 		CHECK_FALSE(ll1.parse("Start"_var, std::vector<cfg_token>{}));
+	}
+	SECTION("invalid grammars")
+	{
+		SECTION("not left-factored")
+		{
+			const chef::cfg grammar{"Start"_var,
+				{{
+					"Start"_var,
+					{{
+						{{0_tok, 1_tok}},
+						{{0_tok, 0_tok}},
+					}},
+				}}};
+			CHECK_THROWS_AS(ll1_table(grammar), chef::construction_error);
+			CHECK_THROWS_WITH(ll1_table(grammar),
+				Contains("Start") && Contains("LL(1)") && Contains("left factor"));
+		}
+		SECTION("has left recursion")
+		{
+			const chef::cfg grammar{"Start"_var,
+				{{
+					"Start"_var,
+					{{
+						{{"Start"_var, 0_tok}},
+						{{0_tok}},
+					}},
+				}}};
+			CHECK_THROWS_AS(ll1_table(grammar), chef::construction_error);
+			CHECK_THROWS_WITH(ll1_table(grammar),
+				// Left recursion may trigger the left factoring error, and that's okay.
+				Contains("Start") && Contains("LL(1)"));
+		}
 	}
 }
