@@ -178,6 +178,40 @@ namespace chef {
 			});
 	}
 
+	std::set<cfg_token> first_plus_set(const cfg_var& var, const cfg_seq& rule,
+		const std::map<cfg_var, std::set<cfg_token>>& first_sets,
+		const std::map<cfg_var, std::set<cfg_token>>& follow_sets)
+	{
+		std::set<cfg_token> result;
+
+		bool all_erasable = false;
+		for (const auto& item : rule) {
+			const bool erasable = std::visit(detail::overload{
+												 [&](cfg_token tok) {
+													 result.insert(tok);
+													 return false;
+												 },
+												 [&](const cfg_var& var) {
+													 const std::set<cfg_token>& first
+														 = first_sets.find(var)->second;
+													 result.insert(first.begin(), first.end());
+													 result.erase(cfg_epsilon);
+													 return first.contains(cfg_epsilon);
+												 },
+											 },
+				item);
+			all_erasable |= erasable;
+			if (!erasable) break;
+		}
+
+		if (all_erasable) {
+			const std::set<cfg_token>& follow = follow_sets.find(var)->second;
+			result.insert(follow.begin(), follow.end());
+		}
+
+		return result;
+	}
+
 	namespace detail {
 		std::ostream& print_to(std::ostream& out, const cfg_var& var)
 		{

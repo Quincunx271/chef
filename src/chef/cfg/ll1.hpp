@@ -40,6 +40,8 @@ namespace chef {
 			: table_(std::move(table))
 		{ }
 
+		explicit ll1_table(const cfg& grammar);
+
 		template <detail::InsertableContainer<cfg_seq::value_type> Container>
 		bool expand_variable(
 			Container& container, const cfg_var& cur, const cfg_token& next_token) const

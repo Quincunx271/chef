@@ -155,6 +155,10 @@ namespace chef {
 	std::map<cfg_var, std::set<cfg_token>> follow_sets(
 		const cfg&, const std::map<cfg_var, std::set<cfg_token>>& first_sets);
 
+	std::set<cfg_token> first_plus_set(const cfg_var& var, const cfg_seq& rule,
+		const std::map<cfg_var, std::set<cfg_token>>& first_sets,
+		const std::map<cfg_var, std::set<cfg_token>>& follow_sets);
+
 	inline ForwardRangeOf<const cfg_var&> auto cfg::vars() const
 	{
 		return std::ranges::views::keys(rules_);
