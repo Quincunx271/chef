@@ -81,6 +81,8 @@ std::optional<std::pair<AddNode, std::string_view>> parse_add_node(std::string_v
 
 ### Bison
 
+[Bison][Bison] is a parser generator tool.
+
 Example (psuedocode):
 
 ```flex
@@ -96,12 +98,82 @@ Add: NUM '+' NUM	{ $$ = $1 + $2; }
 
 ### Boost.Spirit
 
-TODO: I don't remember this off the top of my head, but I recall that Spirit
-does some "magic" to help allow it to parse into whatever type you want. You
-just have to teach Spirit how to understand your types.
+[Boost.Spirit X3][Boost.Spirit.X3] is a parser combinator library. This means
+that each individual rule is a parser, and each parser has an attribute, which
+is the type that the parser produces. The sequence combinator, `a >> b`, simply
+combines the two attributes of the sub-parsers into a `tuple<A, B>`. Similarly
+the alternative combinator, `a | b` combines the two attributes into a
+`variant<A, B>`. There are some smarts for the `tuple<A, B>` case which means
+that, through Boost.Fusion, any tuple-like thing can be used, including regular
+structs exposed to Boost.Fusion. There are also some smarts for attribute-less
+parsers, e.g. constant strings such as `"while"` would have no attribute.
+
+However, Spirit also has something similar to Bison's attributes, which it
+calls "Parser Semantic Actions." These actions allow performing almost any
+action if the given parser successfully parses, via calling the supplied
+lambda.
+
+Example (psuedocode):
+
+```c++
+// Parsing to an AST:
+struct AddNode {
+	int first;
+	int second;
+};
+BOOST_FUSION_ADAPT_STRUCT(::AddNode, first, second);
+
+namespace parser {
+	namespace x3 = boost::spirit::x3;
+	using addnode_type = x3::rule<class addnode, ::AddNode>;
+	// For declaring functions, etc. in header:
+	BOOST_SPIRIT_DECLARE(addnode_type);
+
+	// For the actual definition:
+	const addnode_type addnode = "addnode";
+	const auto addnode_def = x3::double_ >> '+' >> x3::double_;
+	BOOST_SPIRIT_DEFINE(addnode);
+
+	// Maybe a bit more to actually finish instantiating the parser.
+}
+
+template <typename Iter>
+bool parse_add_node(Iter first, Iter last, AddNode& result) {
+	n = 0.0;
+	const bool r = x3::phrase_parse(first, last, parser::addnode, space);
+
+	if (first != last) return false; // to require full consumption.
+	return r;
+}
+
+// Immediate evaluation example:
+// Adapted from https://www.boost.org/doc/libs/1_78_0/libs/spirit/doc/x3/html/spirit_x3/tutorials/sum___adding_numbers.html:
+template <typename Iter>
+bool adder(Iter first, Iter last, double& result) {
+	n = 0.0;
+	const bool r = x3::phrase_parse(first, last,
+		// Grammar
+		(
+			// Even better than just x+y, this enables an arbitrary number of `+`s.
+			double_[ [&](auto& ctx) { result += _attr(ctx); } ] % '+'
+		)
+		, space);
+
+	if (first != last) return false; // to require full consumption.
+	return r;
+}
+```
+
+### ANTLR
+
+TODO: research ANTLR.
 
 # References
 
 - Wikipedia: [Attribute grammar][WIKI].
+- [Bison parser generator documentation][Bison].
+- [Boost.Spirit X3 library documentation][Boost.Spirit.X3].
 
   [WIKI]: https://en.wikipedia.org/wiki/Attribute_grammar
+  [Bison]: https://www.gnu.org/software/bison/manual/html_node/index.html
+  [Boost.Spirit.X3]: https://www.boost.org/doc/libs/1_78_0/libs/spirit/doc/x3/html/index.html
