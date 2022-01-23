@@ -1,7 +1,6 @@
 # Attribute Grammars for Chef
 
-Author: Justin Bassett<br>
-Date: 2022-01-23
+Author: Justin Bassett<br> Date: 2022-01-23
 
 # Summary
 
@@ -22,6 +21,84 @@ rules). For the context of this document, that kind of flexibility is not a
 requirement; it is only required to have some way to generate an AST from the
 grammar. This AST can even be prescribed by Chef, at least for the first
 iteration.
+
+## Existing implementations
+
+Many tools already exist for parsing, so there are many ways that this is
+already accomplished. What are these ways?
+
+### Recursive descent
+
+Synthesizing an AST with a hand-rolled recursive descent parsing implementation
+is natural and straightforward. Being hand-rolled, the AST and the parsing
+functions are defined by the author. The grammar structure is translated into
+the recursive descent implementation, and each function corresponds to a rule
+in the grammar, possibly with some transformations to allow the parser to be
+LL(1). Each function does not return `bool`, but returns something morally
+equivalent to `std::optional<AstNode>`. Given this, it is straightforward to
+define the AST synthesis for any given rule: the function simply combines the
+nodes from its constituent rules into the new node combining all this
+information.
+
+Example:
+
+```c++
+// Grammar; no whitespace allowed:
+// Add -> int '+' int
+// int -> /* an integer */
+
+struct AddNode {
+	int first;
+	int second;
+};
+
+std::optional<std::pair<int, std::string_view>> parse_int_literal(std::string_view input) {
+	int result;
+	const auto parse_result = std::from_chars(input.data(), input.data() + input.size(), &result);
+	if (parse_result.ec != std::errc()) return std::nullopt;
+	return std::pair{
+		result,
+		std::string_view(parse_result.ptr, input.data() + input.size()),
+	};
+}
+
+std::optional<std::pair<AddNode, std::string_view>> parse_add_node(std::string_view input) {
+	if (const auto first = parse_int_literal(input)) {
+		input = first->second;
+		if (input.starts_with('+')) {
+			input.remove_prefix(1);
+			if (const auto second = parse_int_literal(input)) {
+				return std::pair{
+					AddNode{first->first, second->first},
+					second->second,
+				};
+			}
+		}
+	}
+	return std::nullopt;
+}
+```
+
+### Bison
+
+Example (psuedocode):
+
+```flex
+"+" return '+';
+0|[1-9][0-9]* 	yylval.num = parse_int(yytext); return NUM;
+```
+
+```bison
+Add: NUM '+' NUM	{ $$ = AddNode{ $1, $2 }; }
+// Or it could evaluate immediately:
+Add: NUM '+' NUM	{ $$ = $1 + $2; }
+```
+
+### Boost.Spirit
+
+TODO: I don't remember this off the top of my head, but I recall that Spirit
+does some "magic" to help allow it to parse into whatever type you want. You
+just have to teach Spirit how to understand your types.
 
 # References
 
