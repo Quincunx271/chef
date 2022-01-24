@@ -182,6 +182,56 @@ So to summarize, ANTLR allows for an API such as Bison, but it also allows for
 an API with a tree visitor that has `enterFooNode()` and `exitFooNode()`
 functions for each parse tree node.
 
+# Requirements
+
+Chef is intended to be fully `constexpr` at some point in its life. However, it
+is also intended to have runtime ability, because runtime tools to aide in
+grammar development is one very nice thing about a parser generator.
+Additionally, Chef wants to be fast. The chosen direction should ideally not
+inhibit compiler optimization for the `constexpr` variant. If Bison-style
+actions are possible and these are encoded in a type-erased
+`std::function`-like manner to allow for `constexpr` and runtime variants to
+both work, that better not be the only method. But if Boost.Spirit style "rules
+have attributes" works for most cases, with such a type-erased action for only
+a small number of cases, that would probably be okay.
+
+With that in mind, whatever solution that Chef chooses should meet these
+requirements:
+
+- (eventually) `constexpr` friendly, at least once the C++ standard and
+  implementations catch up to a point where it can be implemented in such a
+  manner.
+- Runtime friendly. This means that the parser must be able to be generated at
+  runtime, so no encoding everything in big templated expression templates.
+  However, if the templated expression templates really is the best way for the
+  `constexpr` version, it can be okay if the runtime version still works very
+  well (e.g. uses opt-in type erasure through the expression templates).
+- Possible to be fast. The initial design does not need to be fast, but there
+  should be room in the design to make the parser very fast.
+- Flexible in language. I think this requires both Bison-style actions and also
+  some kind of conditional guards to enable context-sensitive languages such as
+  C++ to be parsed. That said, this flexibility can require some pain to get
+  working. LL(1) or LR(1) languages are definitely the priority.
+- Flexible in output. If the parser can parse directly to many custom ASTs, I'm
+  fond of that idea. I don't really like having a strict requirement that only
+  some specific rigid tree is allowed. However, it's definitely simpler if the
+  model is to generate a parse tree (less obvious punctuation), and only then
+  translate it into the AST, so I'm happy either way. That is, whether it can
+  parse directly to "any" user AST or whether it first has to go to a parse
+  tree that can then be straightforwardly translated to "any" user AST, I'm
+  happy with that.
+
+# Design
+
+At this point, based on the requirements and the existing implementations, it
+seems that the nicest way is to give rules an "attribute" which can be used to
+be combined into the parent rule's attribute. This is the technique used by
+recursive descent parsing, Boost.Spirit, and ANTLR. For flexibility, it would
+be nice if arbitrary actions can also be taken, Bison-style (but also supported
+by Boost.Spirit and ANTLR). Precisely how these attributes get defined and how
+they get translated to the user AST is what the rest of the design should
+concern with.
+
 # References
 
 - Wikipedia: [Attribute grammar][WIKI].
