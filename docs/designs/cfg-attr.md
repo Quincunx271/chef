@@ -166,14 +166,30 @@ bool adder(Iter first, Iter last, double& result) {
 
 ### ANTLR
 
-TODO: research ANTLR.
+[ANTLR][ANTLR] is a parser generator tool.
+
+I don't have too strong of an understanding of ANTLR. But ANTLR works by
+generating a parse tree which mirrors the input grammar. This parse tree is
+walked by some tree walker, where a visitor can be used to make the conversion
+to whatever final AST desired or by performing actions on the fly. I will note
+that if the walker API is all that's being used, it would be unnecessary for
+ANTLR to actually hold the whole parse tree in memory, but it can instead call
+the visitor on the fly. That may or may not be desirable. ANTLR also has
+attributes similarly to Bison where you can run arbitrary code in response to a
+rule being parsed, but this method is discouraged.
+
+So to summarize, ANTLR allows for an API such as Bison, but it also allows for
+an API with a tree visitor that has `enterFooNode()` and `exitFooNode()`
+functions for each parse tree node.
 
 # References
 
 - Wikipedia: [Attribute grammar][WIKI].
 - [Bison parser generator documentation][Bison].
 - [Boost.Spirit X3 library documentation][Boost.Spirit.X3].
+- [ANTLR documentation][ANTLR].
 
   [WIKI]: https://en.wikipedia.org/wiki/Attribute_grammar
   [Bison]: https://www.gnu.org/software/bison/manual/html_node/index.html
   [Boost.Spirit.X3]: https://www.boost.org/doc/libs/1_78_0/libs/spirit/doc/x3/html/index.html
+  [ANTLR]: https://www.antlr.org/
