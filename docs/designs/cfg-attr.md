@@ -309,6 +309,41 @@ This either requires strong reflection (definitely no earlier than C++26,
 probably later than that), or that the parser generating happens before compile
 time. Because of this, I do not think this approach is the direction to go.
 
+## The Dream
+
+The dream interface for Chef is to have the grammar as a raw string literal,
+with hooks into C++ via reflection or calculated at instantiation time:
+
+```c++
+constexpr auto grammar = R"chef(
+	Add -> int '+' int;
+)chef"_grammar;
+
+constexpr auto parser = chef::ll1_parser(grammar);
+
+// Later:
+struct AddNode {
+	int first;
+	int second;
+};
+AddNode add; // Or something to avoid requiring default construction.
+if (parser(input, &add)) // use `add`.
+```
+
+In other words, the ideal is for all the type information to come from the
+actual invocation of the parser, similar to Boost.Spirit. This might not be
+feasible, because:
+
+1. There can be ambiguity.
+2. Thinking of all data types as tuples is problematic.
+3. This constrains the parse tree / first AST to POD types.
+
+Maybe something from ANTLR can be a thing: what if we could parse into some
+kind of visitor?
+
+Maybe something needs to be done to help annotate rules with types to resolve
+ambiguity.
+
 # References
 
 - Wikipedia: [Attribute grammar][WIKI].
