@@ -182,6 +182,28 @@ So to summarize, ANTLR allows for an API such as Bison, but it also allows for
 an API with a tree visitor that has `enterFooNode()` and `exitFooNode()`
 functions for each parse tree node.
 
+## Rule of Chiel
+
+The [Rule of Chiel][Rule.Chiel] is important to understand so that it can be
+kept in mind while pondering the design, otherwise we risk very slow to compile
+code. That said, a lot of compile time programming cost analysis is based on an
+assumption of amortization: if we use this thing many times, how expensive is
+it? But in our case, we expect that there would be approximately one or two
+grammars per translation unit if any at all, so there is nothing to amortize
+over full grammar instantiations.
+
+The Rule of Chiel states that these are in descending order of cost (the (~123)
+numbers are cost estimates, but these are more order-of-magnitude rather than
+actual values):
+
+1. SFINAE. (~500)
+2. Function template instantiation. (~200)
+3. Class template instantiation. (~100)
+4. Evaluating an alias. (~5)
+5. Adding an additional parameter to a class template argument list. (~3)
+6. Adding an additional parameter to an alias. (~2)
+7. Memoized class template lookup. (~1)
+
 # Requirements
 
 Chef is intended to be fully `constexpr` at some point in its life. However, it
@@ -299,4 +321,4 @@ time. Because of this, I do not think this approach is the direction to go.
   [Bison]: https://www.gnu.org/software/bison/manual/html_node/index.html
   [Boost.Spirit.X3]: https://www.boost.org/doc/libs/1_78_0/libs/spirit/doc/x3/html/index.html
   [ANTLR]: https://www.antlr.org/
-  [Rule.Chiel]: 
+  [Rule.Chiel]: https://youtu.be/EtU4RDCCsiU?t=491
