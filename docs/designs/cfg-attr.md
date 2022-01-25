@@ -232,14 +232,71 @@ by Boost.Spirit and ANTLR). Precisely how these attributes get defined and how
 they get translated to the user AST is what the rest of the design should
 concern with.
 
+## Constexpr
+
+To support `constexpr`, that's not too difficult. To support `constexpr` and
+custom types and all that, that's much more difficult. There are only a few
+general ways I can think of to do this: never lose type information, tracing
+type information back to the type-erased data tables, and code generation from
+the type-erased data tables.
+
+### Constexpr: keeping all type information
+
+This has build performance issues. `constexpr`/`consteval` programming is quite
+fast, but template instantiations are quite slow\*. Keeping all type
+information and propagating that through the parsing algorithms would certainly
+work. However, this would likely mean lots of template instantiations for each
+rule or even subrule in the grammar. Furthermore, since each rule would have
+type information on it, it would no longer be possible to do simple things such
+as `for (const auto& rule : rules)`, meaning that the style would have to
+change as well to being more TMP-like functional programming.
+
+For these reasons, this approach is not the direction to go.
+
+\*See the [Rule of Chiel][Rule.Chiel]. Of note is WG21's direction on
+compile-time programming: `consteval` and `constexpr`. I've also done my own
+performance testing, where I found that `constexpr` programming is much faster,
+after accounting for a slight constant overhead.
+
+### Constexpr: tracing to erased information
+
+In this style, the basic `constexpr` support is most of what's needed. The
+grammar and whatnot would be fed into the algorithms, and we get the data table
+back. All that remains is to track the type information back to these data
+tables. Thus, there would need to be some tracing information for the tables,
+telling us what parts of the tables map to what rules of the grammar so that
+the type information can kick in when executing the table.
+
+Note that the actual evaluation of the parsing algorithm would be different
+from the fully erased data table, because the evaluation needs this type
+information. However, for the computation of the tables, the type information
+can be erased.
+
+### Constexpr: code generation
+
+This is a very similar concept to _tracing to erased information_, except
+instead of tracing, the type information would be injected as erased "strings"
+into the data table information or around the data table information. Then, a
+code generation step can take those strings and generate the actual parsing
+code, complete with type information.
+
+This has the same note as before: requires a unique parsing evaluation
+algorithm.
+
+This either requires strong reflection (definitely no earlier than C++26,
+probably later than that), or that the parser generating happens before compile
+time. Because of this, I do not think this approach is the direction to go.
+
 # References
 
 - Wikipedia: [Attribute grammar][WIKI].
 - [Bison parser generator documentation][Bison].
 - [Boost.Spirit X3 library documentation][Boost.Spirit.X3].
 - [ANTLR documentation][ANTLR].
+- [Rule of Chiel][Rule.Chiel].
 
   [WIKI]: https://en.wikipedia.org/wiki/Attribute_grammar
   [Bison]: https://www.gnu.org/software/bison/manual/html_node/index.html
   [Boost.Spirit.X3]: https://www.boost.org/doc/libs/1_78_0/libs/spirit/doc/x3/html/index.html
   [ANTLR]: https://www.antlr.org/
+  [Rule.Chiel]: 
