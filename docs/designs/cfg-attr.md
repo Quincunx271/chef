@@ -344,6 +344,23 @@ kind of visitor?
 Maybe something needs to be done to help annotate rules with types to resolve
 ambiguity.
 
+What about:
+
+```c++
+constexpr auto grammar = chef::grammar(
+	chef::rule<"Add", AddNode>("int '+' int"),
+);
+
+constexpr auto grammar = R"chef(
+	Add -> Int '+' Int;
+	Int -> int
+)chef"_grammar;
+
+constexpr auto parser = chef::ll1_parser(grammar,
+	chef::bind<"Add", AddNode>,
+	chef::bind<"Int", int>([](auto input) -> int { ... });
+```
+
 # References
 
 - Wikipedia: [Attribute grammar][WIKI].
