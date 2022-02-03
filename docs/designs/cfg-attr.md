@@ -367,6 +367,28 @@ constexpr auto parser = chef::ll1_parser(grammar,
 	chef::bind<"Int", int>([](auto input) -> int { ... }); // Bison-style attributes.
 ```
 
+## The easiest-to-implement starting design
+
+Before doing anything complicated, let's start with the simplest possible
+style. Given that everything is currently runtime-only, I'm going to go with a
+runtime AST, and only a single kind of AST for every grammar. This should be
+the most straightforward thing to implement on the current state of the code,
+and it will also be necessary for any runtime parser generator tools.
+
+```c++
+// Something like:
+struct ast_node;
+
+struct sequence_node {
+	std::vector<ast_node> children;
+};
+
+struct ast_node {
+	std::string name;
+	std::variant<sequence_node, /* other node types */> value;
+};
+```
+
 # References
 
 - Wikipedia: [Attribute grammar][WIKI].
