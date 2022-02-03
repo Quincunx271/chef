@@ -338,27 +338,33 @@ feasible, because:
 2. Thinking of all data types as tuples is problematic.
 3. This constrains the parse tree / first AST to POD types.
 
-Maybe something from ANTLR can be a thing: what if we could parse into some
-kind of visitor?
-
-Maybe something needs to be done to help annotate rules with types to resolve
+It's probably necessary to annotate the rules with types to help resolve the
 ambiguity.
 
-What about:
+In the parser side, rather than prescribing an AST, ideally it would be
+possible to pass a visitor, such as ANTLR's method, without requiring
+constructing an actual AST. This is probably more complicated, so this will be
+deferred.
 
 ```c++
+// As an alternative to the raw string literal, an interface such as this can
+// be provided.
 constexpr auto grammar = chef::grammar(
-	chef::rule<"Add", AddNode>("int '+' int"),
+	chef::rule<"Add">("int '+' int"),
 );
 
+// Otherwise, the raw string grammar is a bit more readable, and it better
+// enables interaction with runtime parser generator tools (copy-paste the CFG
+// from the tools into the source code).
 constexpr auto grammar = R"chef(
 	Add -> Int '+' Int;
 	Int -> int
 )chef"_grammar;
 
+// Annotate the type information when creating the parser().
 constexpr auto parser = chef::ll1_parser(grammar,
 	chef::bind<"Add", AddNode>,
-	chef::bind<"Int", int>([](auto input) -> int { ... });
+	chef::bind<"Int", int>([](auto input) -> int { ... }); // Bison-style attributes.
 ```
 
 # References
