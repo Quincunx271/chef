@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iosfwd>
 #include <iterator>
 #include <map>
 #include <ranges>
@@ -110,5 +111,7 @@ namespace chef {
 
 			return stack.empty();
 		}
+
+		void generate_to(std::ostream& out) const;
 	};
 }

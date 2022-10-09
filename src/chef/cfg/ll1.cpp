@@ -1,6 +1,7 @@
 #include "./ll1.hpp"
 
 #include <map>
+#include <ostream>
 #include <set>
 #include <string>
 
@@ -40,4 +41,18 @@ namespace chef {
 	ll1_table::ll1_table(const cfg& grammar)
 		: ll1_table(compute_ll1_table(grammar))
 	{ }
+
+	void ll1_table::generate_to(std::ostream& out) const
+	{
+		// generate function declarations, to a header file.
+		// requires some configuration info, e.g. a name for the parser, a namespace to generate in.
+
+		// generate LL(1) table.
+
+		// generate parsing function.
+		// as part of this...
+
+		// generate attribute synthesis. requires configuration info: connecting rules with the
+		// attribute types.
+	}
 }
