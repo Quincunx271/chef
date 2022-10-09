@@ -6,20 +6,16 @@
 #include <variant>
 #include <vector>
 
+#include <chef/cfg/cfg.hpp>
+
 // Defines a runtime AST for chef.
 //
 // It remains to be decided whether this will include concrete pieces such as
 // punctuation, or whether it will only include the abstract information.
 
 namespace chef::rt_ast {
-	struct ast_node;
-
-	struct sequence_node {
-		std::vector<std::unique_ptr<ast_node>> children;
-	};
-
 	struct ast_node {
-		using value_type = std::variant<cfg_token, sequence_node>;
+		using element_type = std::variant<cfg_token, std::unique_ptr<ast_node>>;
 
 		// The name of the rule that produced this node.
 		std::string name;
@@ -27,6 +23,6 @@ namespace chef::rt_ast {
 		// which piece of the larger rule the node comes from.
 		std::size_t id = 0;
 
-		value_type value;
+		std::vector<element_type> children;
 	};
 }
