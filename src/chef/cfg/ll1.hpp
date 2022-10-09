@@ -1,10 +1,13 @@
 #pragma once
 
+#include <algorithm>
 #include <iterator>
 #include <map>
+#include <optional>
 #include <ranges>
 #include <vector>
 
+#include <chef/cfg/ast.hpp>
 #include <chef/cfg/cfg.hpp>
 #include <chef/util/ranges.hpp>
 
@@ -109,6 +112,74 @@ namespace chef {
 			}
 
 			return stack.empty();
+		}
+
+		template <InputRangeOf<const cfg_token&> TokenStream>
+		std::optional<rt_ast::ast_node> parse_rt(cfg_var start, TokenStream&& tokens) const
+		{
+			using std::ranges::begin;
+			using std::ranges::end;
+
+			struct rule_end_sentinel { };
+
+			std::vector<std::variant<rule_end_sentinel, cfg_seq::value_type>> stack;
+			stack.push_back(std::move(start));
+
+			std::vector<rt_ast::ast_node> seq_stack;
+			seq_stack.emplace_back().name = start.value;
+
+			for (auto first = begin(tokens); first != end(tokens);) {
+				if (stack.empty()) {
+					// An empty stack only matches the empty string, but we have at least one more
+					// token to process.
+					return std::nullopt;
+				}
+				auto cur = std::move(stack.back());
+				stack.pop_back();
+
+				// Either forms a reference or performs temporary lifetime extension if the
+				// operator*() actually returns an rvalue.
+				const cfg_token& next = *first;
+
+				if (std::holds_alternative<rule_end_sentinel>(cur)) {
+					auto node = std::make_unique<rt_ast::ast_node>(std::move(seq_stack.back()));
+					seq_stack.pop_back();
+					seq_stack.back().children.push_back(std::move(node));
+				} else {
+					auto actual_cur = std::get<cfg_seq::value_type>(std::move(cur));
+					if (std::holds_alternative<cfg_token>(actual_cur)) {
+						// Raw tokens must match exactly.
+						if (std::get<cfg_token>(actual_cur) != next) return std::nullopt;
+						seq_stack.back().children.push_back(std::get<cfg_token>(actual_cur));
+						++first;
+					} else {
+						stack.emplace_back(rule_end_sentinel{});
+						seq_stack.emplace_back().name = std::get<cfg_var>(actual_cur).value;
+						// Variables are expanded according to the next token, and we do not pop
+						// from the input sequence.
+						std::vector<cfg_seq::value_type> extract;
+						expand_variable(extract, std::get<cfg_var>(actual_cur), next);
+						std::ranges::transform(extract, std::back_inserter(stack),
+							[](cfg_seq::value_type& val) -> decltype(stack)::value_type {
+								return std::move(val);
+							});
+					}
+				}
+			}
+
+			while (!stack.empty() && std::holds_alternative<rule_end_sentinel>(stack.back())) {
+				stack.pop_back();
+				auto node = std::make_unique<rt_ast::ast_node>(std::move(seq_stack.back()));
+				seq_stack.pop_back();
+				seq_stack.back().children.push_back(std::move(node));
+			}
+
+			if (!stack.empty()) {
+				return std::nullopt;
+			}
+			assert(seq_stack.size() == 1);
+			return std::move(
+				*std::get<std::unique_ptr<rt_ast::ast_node>>(seq_stack.front().children[0]));
 		}
 	};
 }

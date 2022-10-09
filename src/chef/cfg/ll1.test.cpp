@@ -19,6 +19,7 @@ using chef::cfg_seq;
 using chef::cfg_token;
 using chef::cfg_var;
 using chef::ll1_table;
+namespace rt_ast = chef::rt_ast;
 
 using Catch::Matchers::Contains;
 
@@ -155,5 +156,93 @@ TEST_CASE("ll1_table from CFG works")
 				// Left recursion may trigger the left factoring error, and that's okay.
 				Contains("Start") && Contains("LL(1)"));
 		}
+	}
+}
+
+TEST_CASE("ll1_table::parse_rt works")
+{
+	// Example from https://en.wikipedia.org/wiki/LL_parser#Concrete_example.
+	// S -> F | (S + F)
+	// F -> a
+	// 0: a
+	// 1: (
+	// 2: )
+	// 3: +
+	const ll1_table table({
+		{
+			"S"_var,
+			{
+				{0_tok, cfg_seq({"F"_var})},
+				{1_tok, cfg_seq({1_tok, "S"_var, 3_tok, "F"_var, 2_tok})},
+			},
+		},
+		{"F"_var, {{0_tok, cfg_seq({0_tok})}}},
+	});
+
+	SECTION("accepts the types it should")
+	{
+		SECTION("accepts input ranges")
+		{
+			std::istringstream iss;
+			auto input
+				= std::ranges::istream_view<int>(iss) | views::transform([] TL(cfg_token(_1)));
+
+			STATIC_REQUIRE(requires { table.parse_rt("S"_var, input); });
+		}
+		SECTION("accepts std::vector<cfg_token>")
+		{
+			std::vector<cfg_token> input;
+
+			STATIC_REQUIRE(requires { table.parse_rt("S"_var, input); });
+			STATIC_REQUIRE(requires { table.parse_rt("S"_var, std::as_const(input)); });
+		}
+	}
+
+	SECTION("parses valid input")
+	{
+		// Input: (a + a); from same example as the grammar.
+		const std::vector<cfg_token> input{1_tok, 0_tok, 3_tok, 0_tok, 2_tok};
+
+		std::optional<rt_ast::ast_node> result = table.parse_rt("S"_var, input);
+		REQUIRE(result.has_value());
+		CHECK(result->name == "S");
+		REQUIRE(result->children.size() == 5);
+
+		REQUIRE(std::holds_alternative<cfg_token>(result->children[0]));
+		REQUIRE(std::holds_alternative<cfg_token>(result->children[2]));
+		REQUIRE(std::holds_alternative<cfg_token>(result->children[4]));
+		CHECK(std::get<cfg_token>(result->children[0]) == 1_tok);
+		// CHECK(result->children[1] == "S");
+		CHECK(std::get<cfg_token>(result->children[2]) == 3_tok);
+		// CHECK(result->children[3] == "F");
+		CHECK(std::get<cfg_token>(result->children[4]) == 2_tok);
+
+		REQUIRE(std::holds_alternative<std::unique_ptr<rt_ast::ast_node>>(result->children[1]));
+		REQUIRE(std::holds_alternative<std::unique_ptr<rt_ast::ast_node>>(result->children[3]));
+
+		const auto& s_node = std::get<std::unique_ptr<rt_ast::ast_node>>(result->children[1]);
+		CHECK(s_node->name == "S");
+		REQUIRE(s_node->children.size() == 1);
+		CHECK(std::holds_alternative<std::unique_ptr<rt_ast::ast_node>>(s_node->children[0]));
+		const auto& s_f_node = std::get<std::unique_ptr<rt_ast::ast_node>>(s_node->children[0]);
+		CHECK(s_f_node->name == "F");
+		REQUIRE(s_f_node->children.size() == 1);
+		REQUIRE(std::holds_alternative<cfg_token>(s_f_node->children[0]));
+		CHECK(std::get<cfg_token>(s_f_node->children[0]) == 0_tok);
+
+		const auto& f_node = std::get<std::unique_ptr<rt_ast::ast_node>>(result->children[3]);
+		CHECK(f_node->name == "F");
+		REQUIRE(f_node->children.size() == 1);
+		REQUIRE(std::holds_alternative<cfg_token>(f_node->children[0]));
+		CHECK(std::get<cfg_token>(f_node->children[0]) == 0_tok);
+	}
+	SECTION("rejects invalid input")
+	{
+		// Input: (a + a; from same example as the grammar.
+
+		// To produce a std::input_range, use istringstream + view::istream().
+		const std::vector<cfg_token> input{1_tok, 0_tok, 3_tok, 0_tok};
+
+		CHECK_FALSE(table.parse_rt("S"_var, input).has_value());
 	}
 }
