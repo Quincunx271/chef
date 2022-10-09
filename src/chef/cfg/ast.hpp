@@ -19,7 +19,7 @@ namespace chef::rt_ast {
 	};
 
 	struct ast_node {
-		using value_type = std::variant<sequence_node>;
+		using value_type = std::variant<cfg_token, sequence_node>;
 
 		// The name of the rule that produced this node.
 		std::string name;
